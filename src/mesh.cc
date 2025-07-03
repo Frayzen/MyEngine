@@ -54,8 +54,9 @@ void Mesh::setVertices(std::vector<Vertex> buffer) {
   // Set the overall stride of the buffer (where to find the beginning of each
   // Vertex)
   glVertexAttribPointer(VERTEX_ATTRIB_ARRAY, sizeof(Vertex) / sizeof(float),
-                        GL_FLOAT, GL_FALSE, 0, NULL);
+                        GL_FLOAT, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(VERTEX_ATTRIB_ARRAY);
+  amountTris = buffer.size();
 }
 
 Mesh::~Mesh() {

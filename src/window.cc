@@ -7,14 +7,14 @@ void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-int MEWindow::setupWindow(int width, int height, const char *title) {
+int Window::setupWindow(int width, int height, const char *title) {
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-  window = glfwCreateWindow(width, height, title, NULL, NULL);
+  window = glfwCreateWindow(width, height, title, nullptr, nullptr);
   if (!window)
     return 1;
   glfwMakeContextCurrent(window);
@@ -27,7 +27,7 @@ int MEWindow::setupWindow(int width, int height, const char *title) {
   return 0;
 }
 
-void MEWindow::run() {
+void Window::run() {
   while (!glfwWindowShouldClose(window)) {
     glfwSwapBuffers(window);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -36,7 +36,7 @@ void MEWindow::run() {
   }
 }
 
-MEWindow::~MEWindow() {
+Window::~Window() {
   glfwTerminate();
   if (glfwGetCurrentContext() != nullptr)
     glfwDestroyWindow(glfwGetCurrentContext());

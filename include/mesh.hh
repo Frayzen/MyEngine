@@ -14,4 +14,5 @@ public:
 
 private:
   unsigned int VBO, VAO;
+  unsigned int amountTris;
 };

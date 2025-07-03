@@ -15,14 +15,14 @@ static std::string readFile(const std::string path) {
 static unsigned int createShader(const std::string path, GLenum shaderType) {
   unsigned int shader = glCreateShader(shaderType);
   std::string shaderCode = readFile(path);
-  glShaderSource(shader, 1, (const GLchar *const *)path.c_str(), NULL);
+  glShaderSource(shader, 1, (const GLchar *const *)path.c_str(), nullptr);
   glCompileShader(shader);
 
   int success;
   char infoLog[512];
   glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
   if (!success) {
-    glGetShaderInfoLog(shader, 512, NULL, infoLog);
+    glGetShaderInfoLog(shader, 512, nullptr, infoLog);
     std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
               << infoLog << std::endl;
     return 0;

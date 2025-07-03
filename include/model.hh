@@ -9,11 +9,12 @@ class Model {
 public:
   Model(std::shared_ptr<Model> parent, Transform &transform);
 
-  Model loadModel(std::string &path);
+  static std::shared_ptr<Model> loadModel(const std::string path);
   void addChild(Model &model);
   void addMesh(std::shared_ptr<Mesh> m);
 
-  const Mesh &getMesh();
+  const std::vector<std::shared_ptr<Mesh>> getMeshes();
+  const std::vector<std::shared_ptr<Model>> getSubmodels();
   const Transform &getTransform();
 
 private:

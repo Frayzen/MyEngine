@@ -26,21 +26,23 @@ static Transform getTransform(const aiNode *node) {
   return transform;
 }
 
-static std::shared_ptr<Model> createModel(std::shared_ptr<Model> parent,
+static std::shared_ptr<Model> createModel(const aiScene *scene,
+                                          std::shared_ptr<Model> parent,
                                           const aiNode *node) {
   Transform transform = getTransform(node);
   std::shared_ptr<Model> cur = std::make_shared<Model>(parent, transform);
 
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-    cur->addMesh(std::make_shared<Mesh>(node->mMeshes[i]));
+    aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+    cur->addMesh(std::make_shared<Mesh>(mesh));
   }
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    createModel(cur, node->mChildren[i]);
+    createModel(scene, cur, node->mChildren[i]);
   }
   return cur;
 }
 
-Model Model::loadModel(std::string &path) {
+std::shared_ptr<Model> Model::loadModel(const std::string path) {
   static Assimp::Importer importer;
   const aiScene *scene = importer.ReadFile(
       path.c_str(),
@@ -54,7 +56,7 @@ Model Model::loadModel(std::string &path) {
                       << importer.GetErrorString());
   auto p = std::filesystem::path(path);
 
-  return *createModel(NULL, scene->mRootNode);
+  return createModel(scene, nullptr, scene->mRootNode);
 }
 
 void Model::addChild(Model &model) {
@@ -65,3 +67,9 @@ void Model::addMesh(std::shared_ptr<Mesh> m) { meshes.push_back(m); }
 
 Model::Model(std::shared_ptr<Model> parent, Transform &transform)
     : parent(parent), transform(transform) {};
+
+const std::vector<std::shared_ptr<Mesh>> Model::getMeshes() { return meshes; }
+const std::vector<std::shared_ptr<Model>> Model::getSubmodels() {
+  return submodels;
+}
+const Transform &Model::getTransform() { return transform; }

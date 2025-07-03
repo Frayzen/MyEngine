@@ -20,3 +20,8 @@ target_link_libraries(MyEngine OpenGL::GL)
 target_link_libraries(MyEngine assimp)
 target_link_libraries(MyEngine glm::glm)
 target_link_libraries(MyEngine glfw)
+
+if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  ADD_CUSTOM_TARGET(link_target ALL
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets)
+endif()
