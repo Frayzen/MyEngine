@@ -1,7 +1,22 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(MyEngine)
-file(GLOB_RECURSE sources src/*.cpp)
 
-add_executable(MyEngine ${sources})
-target_compile_options(MyEngine PUBLIC -Wall -Wextra -Werror -pedantic -std=c++20 -Wold-style-cast -Wno-error=old-style-cast)
+set(OpenGL_GL_PREFERENCE GLVND)
 
+find_package(OpenGL REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(assimp REQUIRED)
+find_package(glm REQUIRED)
+
+file(GLOB_RECURSE cpp_sources src/*.cc)
+file(GLOB_RECURSE c_sources src/*.c)
+
+add_executable(MyEngine ${sources} ${cpp_sources})
+target_compile_options(MyEngine PUBLIC -Wall -Wextra -Werror -pedantic -std=c++20)
+
+target_include_directories(MyEngine PUBLIC ./include)
+
+target_link_libraries(MyEngine OpenGL::GL)
+target_link_libraries(MyEngine assimp)
+target_link_libraries(MyEngine glm::glm)
+target_link_libraries(MyEngine glfw)
