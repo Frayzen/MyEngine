@@ -23,7 +23,7 @@ static unsigned int createShader(const std::string path, GLenum shaderType) {
   glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
   if (!success) {
     glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-    std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+    std::cerr << "ERROR::SHADER::COMPILATION_FAILED " << path << "\n "
               << infoLog << std::endl;
     return 0;
   }

@@ -70,8 +70,8 @@ void Mesh::setVertices(std::vector<Vertex> vertices,
   // Generate VBO
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(VBO, vertices.size() * sizeof(Vertex), vertices.data(),
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),
+               vertices.data(), GL_STATIC_DRAW);
 
   // Generate EBO
   glGenBuffers(1, &EBO);

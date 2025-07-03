@@ -9,7 +9,6 @@
 #include <assimp/quaternion.h>
 #include <assimp/scene.h>
 #include <assimp/vector3.h>
-#include <cstddef>
 #include <filesystem>
 #include <memory>
 #include <vector>
@@ -22,7 +21,7 @@ static Transform getTransform(const aiNode *node) {
   Transform transform;
   transform.scale = {scale.x, scale.y, scale.z};
   transform.position = {pos.x, pos.y, pos.z};
-  transform.rotation = {rot.x, rot.y, rot.z, rot.w};
+  transform.rotation = {rot.w, rot.x, rot.y, rot.z};
   return transform;
 }
 
@@ -47,7 +46,7 @@ std::shared_ptr<Model> Model::loadModel(const std::string path) {
   const aiScene *scene = importer.ReadFile(
       path.c_str(),
       aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
-          aiProcess_GenUVCoords | aiProcess_FlipUVs |
+          aiProcess_MakeLeftHanded | aiProcess_GenUVCoords |
           aiProcess_RemoveRedundantMaterials |
           aiProcess_GenSmoothNormals /* or aiProcess_GenNormals */);
   FAIL_ON(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||

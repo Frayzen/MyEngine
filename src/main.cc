@@ -17,7 +17,7 @@ int main() {
   auto m = Model::loadModel("./assets/teapot.obj");
 
   Camera cam(90, (1.0 * width) / heigth, 0.1, 1000);
-  cam.transform.position = glm::vec3(0, 0, -8);
+  cam.transform.position = glm::vec3(0, -2, -5);
   Scene scene(cam);
   scene.instantiate(m);
 

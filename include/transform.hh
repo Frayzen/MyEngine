@@ -3,6 +3,7 @@
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/quaternion_float.hpp>
 #include <glm/ext/vector_float3.hpp>
+#include <ostream>
 class Transform {
 public:
   Transform();
@@ -12,3 +13,5 @@ public:
 
   glm::mat4 getMat();
 };
+
+std::ostream &operator<<(std::ostream &os, Transform const &t);
