@@ -1,6 +1,5 @@
 #include "shader.hh"
 #include "glad/glad.h"
-#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -15,7 +14,8 @@ static std::string readFile(const std::string path) {
 static unsigned int createShader(const std::string path, GLenum shaderType) {
   unsigned int shader = glCreateShader(shaderType);
   std::string shaderCode = readFile(path);
-  glShaderSource(shader, 1, (const GLchar *const *)path.c_str(), nullptr);
+  const char *shaderSource = shaderCode.c_str();
+  glShaderSource(shader, 1, &shaderSource, nullptr);
   glCompileShader(shader);
 
   int success;
@@ -46,4 +46,8 @@ Shader::~Shader() {
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
   glDeleteProgram(shaderProgram);
+}
+
+unsigned int Shader::loc(const std::string name) {
+  return glGetUniformLocation(shaderProgram, name.c_str());
 }

@@ -1,5 +1,6 @@
 #include "window.hh"
-#include <cstddef>
+#include "glad/glad.h"
+#include "scene.hh"
 #include <iostream>
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
@@ -24,15 +25,23 @@ int Window::setupWindow(int width, int height, const char *title) {
   }
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
   glViewport(0, 0, width, height);
+  glEnable(GL_DEPTH_TEST);
   return 0;
 }
 
-void Window::run() {
+void Window::run(Scene &scene) {
   while (!glfwWindowShouldClose(window)) {
-    glfwSwapBuffers(window);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    scene.render();
+    // Check for OpenGL errors
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+      std::cerr << "OpenGL Error: " << err << std::endl;
+    }
+
     glfwPollEvents();
+    glfwSwapBuffers(window);
   }
 }
 

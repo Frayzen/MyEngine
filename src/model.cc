@@ -37,7 +37,7 @@ static std::shared_ptr<Model> createModel(const aiScene *scene,
     cur->addMesh(std::make_shared<Mesh>(mesh));
   }
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    createModel(scene, cur, node->mChildren[i]);
+    cur->addSubmodel(createModel(scene, cur, node->mChildren[i]));
   }
   return cur;
 }
@@ -64,6 +64,9 @@ void Model::addChild(Model &model) {
 }
 
 void Model::addMesh(std::shared_ptr<Mesh> m) { meshes.push_back(m); }
+void Model::addSubmodel(std::shared_ptr<Model> model) {
+  submodels.push_back(model);
+}
 
 Model::Model(std::shared_ptr<Model> parent, Transform &transform)
     : parent(parent), transform(transform) {};

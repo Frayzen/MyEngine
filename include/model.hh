@@ -12,6 +12,7 @@ public:
   static std::shared_ptr<Model> loadModel(const std::string path);
   void addChild(Model &model);
   void addMesh(std::shared_ptr<Mesh> m);
+  void addSubmodel(std::shared_ptr<Model> submodel);
 
   const std::vector<std::shared_ptr<Mesh>> getMeshes();
   const std::vector<std::shared_ptr<Model>> getSubmodels();
