@@ -3,6 +3,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_float.hpp>
 
+#include <glm/ext/vector_float3.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
@@ -30,3 +31,7 @@ std::ostream &operator<<(std::ostream &os, Transform const &t) {
   os << "POS: " << glm::to_string(t.position) << std::endl;
   return os;
 }
+
+glm::vec3 Transform::right() { return glm::vec3(1, 0, 0) * rotation; }
+glm::vec3 Transform::up() { return glm::vec3(0, 1, 0) * rotation; }
+glm::vec3 Transform::front() { return glm::vec3(0, 0, -1) * rotation; }

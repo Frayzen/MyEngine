@@ -12,6 +12,10 @@ public:
   glm::quat rotation;
 
   glm::mat4 getMat();
+
+  glm::vec3 front();
+  glm::vec3 right();
+  glm::vec3 up();
 };
 
 std::ostream &operator<<(std::ostream &os, Transform const &t);

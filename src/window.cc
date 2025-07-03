@@ -30,15 +30,23 @@ int Window::setupWindow(int width, int height, const char *title) {
 }
 
 void Window::run(Scene &scene) {
+  double previousTime = glfwGetTime();
+
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    scene.update();
     scene.render();
     // Check for OpenGL errors
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
       std::cerr << "OpenGL Error: " << err << std::endl;
     }
+
+    double currentTime = glfwGetTime();
+    double deltaTime = currentTime - previousTime;
+    std::cout << "dt " << deltaTime << std::endl;
+    previousTime = currentTime;
 
     glfwPollEvents();
     glfwSwapBuffers(window);

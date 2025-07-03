@@ -8,13 +8,13 @@
 #include <vector>
 class Object {
 public:
-  Object(std::shared_ptr<Mesh> mesh, const Transform transform);
-  void instantiate(std::shared_ptr<Model> model);
+  Object(const std::string name, std::shared_ptr<Mesh> mesh,
+         const Transform transform);
+
+  std::shared_ptr<Object> instantiate(std::shared_ptr<Model> model);
   void render(Camera &camera, glm::mat4 viewMat);
 
-  static std::shared_ptr<Object> createFrom(std::shared_ptr<Model> model,
-                                            Object *parent);
-
+  std::string name;
   Transform transform;
   std::shared_ptr<Mesh> mesh;
   std::vector<std::shared_ptr<Object>> children;

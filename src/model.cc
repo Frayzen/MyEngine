@@ -29,7 +29,8 @@ static std::shared_ptr<Model> createModel(const aiScene *scene,
                                           std::shared_ptr<Model> parent,
                                           const aiNode *node) {
   Transform transform = getTransform(node);
-  std::shared_ptr<Model> cur = std::make_shared<Model>(parent, transform);
+  std::shared_ptr<Model> cur =
+      std::make_shared<Model>(node->mName.C_Str(), parent, transform);
 
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -55,6 +56,7 @@ std::shared_ptr<Model> Model::loadModel(const std::string path) {
                       << importer.GetErrorString());
   auto p = std::filesystem::path(path);
 
+  std::cout << "DONE LOADING " << path << '\n';
   return createModel(scene, nullptr, scene->mRootNode);
 }
 
@@ -67,11 +69,14 @@ void Model::addSubmodel(std::shared_ptr<Model> model) {
   submodels.push_back(model);
 }
 
-Model::Model(std::shared_ptr<Model> parent, Transform &transform)
-    : parent(parent), transform(transform) {};
+Model::Model(std::string name, std::shared_ptr<Model> parent,
+             Transform &transform)
+    : name(name), parent(parent), transform(transform) {};
 
 const std::vector<std::shared_ptr<Mesh>> Model::getMeshes() { return meshes; }
 const std::vector<std::shared_ptr<Model>> Model::getSubmodels() {
   return submodels;
 }
-const Transform &Model::getTransform() { return transform; }
+Transform &Model::getTransform() { return transform; }
+
+const std::string &Model::getName() { return name; }

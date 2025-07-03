@@ -9,7 +9,6 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glm/ext/vector_uint3.hpp>
-#include <iostream>
 #include <vector>
 
 Mesh::Mesh(const aiMesh *mesh) : Mesh() {
@@ -25,7 +24,6 @@ Mesh::Mesh(const aiMesh *mesh) : Mesh() {
 
     // VN
     if (!mesh->mNormals) {
-      std::cout << "/!\\ NO NORMALS FOUND IN " << mesh->mName.C_Str() << '\n';
       cur.vn = {0, 0, 0}; // Default normal if missing
     } else {
       auto norm = mesh->mNormals[i];

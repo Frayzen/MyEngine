@@ -8,16 +8,19 @@
 int main() {
   std::cout << "Hello World !" << std::endl;
 
-  const int width = 1800;
-  const int heigth = 1200;
+  const int width = 1200;
+  const int heigth = 800;
 
   Window window;
   if (window.setupWindow(width, heigth, "Test"))
     return 1;
-  auto m = Model::loadModel("./assets/teapot.obj");
+  auto m =
+      // Model::loadModel("./assets/ironman/Iron_Man_Mark_44_Hulkbuster_fbx.FBX");
+      // Model::loadModel("./assets/teapot.obj");
+      Model::loadModel("./assets/Link/Link.obj");
 
   Camera cam(90, (1.0 * width) / heigth, 0.1, 1000);
-  cam.transform.position = glm::vec3(0, -2, -5);
+
   Scene scene(cam);
   scene.instantiate(m);
 

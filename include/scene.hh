@@ -8,6 +8,7 @@ public:
   Scene(Camera &cam);
 
   void render();
+  void update();
   void instantiate(std::shared_ptr<Model> model);
 
 private:
