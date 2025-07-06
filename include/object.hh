@@ -12,7 +12,7 @@ public:
          const Transform transform);
 
   std::shared_ptr<Object> instantiate(std::shared_ptr<Model> model);
-  void render(Camera &camera, glm::mat4 viewMat);
+  void render(Camera &camera, glm::mat4 parentMat);
 
   std::string name;
   Transform transform;

@@ -17,12 +17,20 @@
 Transform::Transform()
     : position(0), scale(1), rotation(glm::identity<glm::quat>()) {}
 
-glm::mat4 Transform::getMat() {
+glm::mat4 Transform::getViewMat() {
   glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
   glm::mat4 rotationMat = glm::toMat4(rotation);
   glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), scale);
 
-  return rotationMat * scaleMat * translation;
+  return scaleMat * rotationMat * translation;
+}
+
+glm::mat4 Transform::getModelMat() {
+  glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
+  glm::mat4 rotationMat = glm::toMat4(rotation);
+  glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), scale);
+
+  return translation * rotationMat * scaleMat;
 }
 
 std::ostream &operator<<(std::ostream &os, Transform const &t) {

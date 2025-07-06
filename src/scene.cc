@@ -15,12 +15,12 @@ void Scene::update() { camera.update(); }
 
 void Scene::render() {
   camera.shader.activate();
-  glm::mat4 view = camera.transform.getMat();
+  glm::mat4 view = camera.transform.getViewMat();
   glm::mat4 proj = camera.getPerspectiveMat();
   glUniformMatrix4fv(camera.shader.loc("view"), 1, GL_FALSE, &view[0][0]);
   glUniformMatrix4fv(camera.shader.loc("projection"), 1, GL_FALSE, &proj[0][0]);
   // std::cout << "BEGIN" << std::endl;
-  rootObject->render(camera, Transform().getMat());
+  rootObject->render(camera, Transform().getModelMat());
   // std::cout << "END" << std::endl;
   glBindVertexArray(0);
 }

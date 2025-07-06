@@ -11,7 +11,8 @@ public:
   glm::vec3 scale;
   glm::quat rotation;
 
-  glm::mat4 getMat();
+  glm::mat4 getViewMat();
+  glm::mat4 getModelMat();
 
   glm::vec3 front();
   glm::vec3 right();

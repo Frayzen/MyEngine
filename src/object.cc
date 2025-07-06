@@ -28,9 +28,9 @@ std::shared_ptr<Object> Object::instantiate(std::shared_ptr<Model> model) {
   return created;
 }
 
-void Object::render(Camera &camera, glm::mat4 viewMat) {
+void Object::render(Camera &camera, glm::mat4 parentMat) {
 
-  glm::mat4 cur = transform.getMat() * viewMat;
+  glm::mat4 cur = parentMat * transform.getModelMat();
   if (mesh != nullptr) {
     glUniformMatrix4fv(camera.shader.loc("model"), 1, GL_FALSE, &cur[0][0]);
     mesh->activate();
