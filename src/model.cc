@@ -13,6 +13,11 @@
 #include <memory>
 #include <vector>
 
+struct ModelBuilder {
+  const aiScene *scene;
+  std::vector<std::shared_ptr<Mesh>> meshes;
+};
+
 static Transform getTransform(const aiNode *node) {
   aiVector3D pos;
   aiQuaternion rot;
@@ -25,7 +30,7 @@ static Transform getTransform(const aiNode *node) {
   return transform;
 }
 
-static std::shared_ptr<Model> createModel(const aiScene *scene,
+static std::shared_ptr<Model> createModel(ModelBuilder &builder,
                                           std::shared_ptr<Model> parent,
                                           const aiNode *node) {
   Transform transform = getTransform(node);
@@ -33,11 +38,10 @@ static std::shared_ptr<Model> createModel(const aiScene *scene,
       std::make_shared<Model>(node->mName.C_Str(), parent, transform);
 
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-    aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    cur->addMesh(std::make_shared<Mesh>(mesh));
+    cur->addMesh(builder.meshes[node->mMeshes[i]]);
   }
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    cur->addSubmodel(createModel(scene, cur, node->mChildren[i]));
+    cur->addSubmodel(createModel(builder, cur, node->mChildren[i]));
   }
   return cur;
 }
@@ -57,7 +61,14 @@ std::shared_ptr<Model> Model::loadModel(const std::string path) {
   auto p = std::filesystem::path(path);
 
   std::cout << "DONE LOADING " << path << '\n';
-  return createModel(scene, nullptr, scene->mRootNode);
+
+  struct ModelBuilder builder = {
+      .scene = scene,
+      .meshes = std::vector<std::shared_ptr<Mesh>>(),
+  };
+  for (unsigned int i = 0; i < scene->mNumMeshes; i++)
+    builder.meshes.push_back(std::make_shared<Mesh>(scene->mMeshes[i]));
+  return createModel(builder, nullptr, scene->mRootNode);
 }
 
 void Model::addChild(Model &model) {
