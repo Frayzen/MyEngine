@@ -1,8 +1,10 @@
 #pragma once
 
+#include "material.hh"
 #include "vertex.hh"
 #include <assimp/mesh.h>
 #include <glm/ext/vector_uint3.hpp>
+#include <memory>
 #include <vector>
 
 class Mesh {
@@ -15,7 +17,11 @@ public:
 
   ~Mesh();
 
+  void setMaterial(std::shared_ptr<Material> mat);
+
 private:
+  std::shared_ptr<Material> material;
+
   unsigned int VBO, VAO, EBO;
   unsigned int amountTris;
 };

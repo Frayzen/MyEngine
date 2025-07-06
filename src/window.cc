@@ -4,29 +4,64 @@
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
 
-void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
+// Error callback function
+static void glfw_error_callback(int error, const char *description) {
+  fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
+static void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   (void)window;
   glViewport(0, 0, width, height);
 }
 
 int Window::setupWindow(int width, int height, const char *title) {
+  glfwSetErrorCallback(glfw_error_callback);
+
   glfwInit();
+
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
   window = glfwCreateWindow(width, height, title, nullptr, nullptr);
   if (!window)
     return 1;
   glfwMakeContextCurrent(window);
+
+  // NO OPENGL CODE BEFORE THIS
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return -1;
   }
+
+  if (GLAD_GL_KHR_debug) {
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(
+        [](GLenum source, GLenum type, GLuint id, GLenum severity,
+           GLsizei length, const GLchar *message, const void *userParam) {
+          if (severity != GL_DEBUG_SEVERITY_NOTIFICATION) {
+
+            (void)source;
+            (void)type;
+            (void)id;
+            (void)severity;
+            (void)length;
+            (void)length;
+            (void)message;
+            (void)userParam;
+            std::cerr << "OpenGL Debug: " << message << std::endl;
+          }
+        },
+        nullptr);
+  }
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
   glViewport(0, 0, width, height);
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
+
   return 0;
 }
 
@@ -38,11 +73,6 @@ void Window::run(Scene &scene) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     scene.update();
     scene.render();
-    // Check for OpenGL errors
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-      std::cerr << "OpenGL Error: " << err << std::endl;
-    }
 
     double currentTime = glfwGetTime();
     glm::mat4 rotationMatrix =
@@ -61,7 +91,7 @@ void Window::run(Scene &scene) {
 }
 
 Window::~Window() {
-  glfwTerminate();
   if (glfwGetCurrentContext() != nullptr)
     glfwDestroyWindow(glfwGetCurrentContext());
+  glfwTerminate();
 }

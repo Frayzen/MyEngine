@@ -9,6 +9,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <glm/ext/vector_uint3.hpp>
+#include <iostream>
 #include <vector>
 
 Mesh::Mesh(const aiMesh *mesh) : Mesh() {
@@ -56,6 +57,19 @@ Mesh::Mesh(const aiMesh *mesh) : Mesh() {
 
 void Mesh::setVertices(std::vector<Vertex> vertices,
                        std::vector<glm::uvec3> tris) {
+  if (vertices.empty() || tris.empty()) {
+    std::cerr << "Error: Empty vertex or index data!" << std::endl;
+    return;
+  }
+  for (const auto &tri : tris) {
+    if (tri.x >= vertices.size() || tri.y >= vertices.size() ||
+        tri.z >= vertices.size()) {
+      std::cerr << "Error: Index out of bounds!" << std::endl;
+      return;
+    }
+  }
+  assert(sizeof(Vertex) == sizeof(float) * 8);
+
   if (VAO)
     glDeleteVertexArrays(1, &VAO);
   if (VBO)
@@ -89,7 +103,9 @@ void Mesh::setVertices(std::vector<Vertex> vertices,
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glEnableVertexAttribArray(2);
+  glBindVertexArray(0);
   amountTris = tris.size();
+  assert(amountTris != 0);
 }
 
 Mesh::~Mesh() {
@@ -104,6 +120,15 @@ Mesh::~Mesh() {
     glDeleteBuffers(1, &EBO);
 }
 
-void Mesh::activate() { glBindVertexArray(VAO); }
+void Mesh::activate() {
+  if (VAO == 0) {
+    std::cerr << "Error: VAO not initialized!" << std::endl;
+  }
+  glBindVertexArray(VAO);
+  if (material)
+    material->activate();
+}
 
 unsigned int Mesh::getAmountTris() { return amountTris; }
+
+void Mesh::setMaterial(std::shared_ptr<Material> mat) { material = mat; }

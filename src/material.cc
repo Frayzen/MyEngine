@@ -99,9 +99,20 @@ Material::Material(std::filesystem::path path, const aiMaterial *mat) {
   // if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_EMISSIVE, c))
   //   m.emissiveCol = glm::vec3(c.r, c.g, c.b);
 
+  int boolean;
+  if (AI_SUCCESS == mat->Get(AI_MATKEY_TWOSIDED, boolean))
+    disableCulling = boolean;
+
   // Print informations
   std::cout << "Material " << materialName.C_Str() << " loaded" << std::endl;
   // int textCount =
   //     (m.diffuseText_ != 0) + (m.ambientText_ != 0) + (m.specularText_ != 0);
   // std::cout << "(" << textCount << "textures)" << '\n';
+}
+
+void Material::activate() {
+  if (disableCulling)
+    glDisable(GL_CULL_FACE);
+  else
+    glEnable(GL_CULL_FACE);
 }

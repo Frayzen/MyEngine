@@ -1,5 +1,6 @@
 #include "model.hh"
 
+#include "material.hh"
 #include "mesh.hh"
 #include "transform.hh"
 #include "utils.hh"
@@ -16,6 +17,7 @@
 struct ModelBuilder {
   const aiScene *scene;
   std::vector<std::shared_ptr<Mesh>> meshes;
+  std::vector<std::shared_ptr<Material>> materials;
 };
 
 static Transform getTransform(const aiNode *node) {
@@ -47,6 +49,8 @@ static std::shared_ptr<Model> createModel(ModelBuilder &builder,
 }
 
 std::shared_ptr<Model> Model::loadModel(const std::string path) {
+  std::filesystem::path fullPath(path);
+
   static Assimp::Importer importer;
   const aiScene *scene = importer.ReadFile(
       path.c_str(),
@@ -58,16 +62,25 @@ std::shared_ptr<Model> Model::loadModel(const std::string path) {
               !scene->mRootNode,
           "The mesh " << path.c_str() << "could not be loaded.\nReason:"
                       << importer.GetErrorString());
-  auto p = std::filesystem::path(path);
-
   std::cout << "DONE LOADING " << path << '\n';
 
-  struct ModelBuilder builder = {
-      .scene = scene,
-      .meshes = std::vector<std::shared_ptr<Mesh>>(),
-  };
-  for (unsigned int i = 0; i < scene->mNumMeshes; i++)
-    builder.meshes.push_back(std::make_shared<Mesh>(scene->mMeshes[i]));
+  struct ModelBuilder builder = {.scene = scene,
+                                 .meshes = std::vector<std::shared_ptr<Mesh>>(),
+                                 .materials =
+                                     std::vector<std::shared_ptr<Material>>()};
+  auto parentPath = fullPath.parent_path();
+  for (unsigned int i = 0; i < scene->mNumMaterials; i++)
+    builder.materials.push_back(
+        std::make_shared<Material>(parentPath, scene->mMaterials[i]));
+  for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+    const aiMesh *aiMesh = scene->mMeshes[i];
+    auto loadedMesh = std::make_shared<Mesh>(aiMesh);
+    builder.meshes.push_back(loadedMesh);
+    if (aiMesh->mMaterialIndex < builder.materials.size())
+      loadedMesh->setMaterial(builder.materials[aiMesh->mMaterialIndex]);
+    else
+      std::cout << "No material for " << aiMesh->mName.C_Str() << std::endl;
+  }
   return createModel(builder, nullptr, scene->mRootNode);
 }
 
