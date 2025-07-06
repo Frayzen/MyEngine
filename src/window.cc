@@ -1,6 +1,7 @@
 #include "window.hh"
-#include "glad/glad.h"
 #include "scene.hh"
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <iostream>
 
 void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
@@ -44,8 +45,14 @@ void Window::run(Scene &scene) {
     }
 
     double currentTime = glfwGetTime();
+    glm::mat4 rotationMatrix =
+        glm::rotate(glm::mat4(1.0f), glm::radians((float)currentTime * 30),
+                    glm::vec3(0.0f, 1.0f, 0.0f));
+    scene.rootObject->transform.rotation = glm::quat_cast(rotationMatrix);
+
     double deltaTime = currentTime - previousTime;
-    std::cout << "dt " << deltaTime << std::endl;
+    (void)deltaTime;
+    // std::cout << "dt " << deltaTime << std::endl;
     previousTime = currentTime;
 
     glfwPollEvents();

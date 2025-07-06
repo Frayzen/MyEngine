@@ -36,16 +36,16 @@ void Object::render(Camera &camera, glm::mat4 parentMat) {
     mesh->activate();
     glDrawElements(GL_TRIANGLES, mesh->getAmountTris() * 3, GL_UNSIGNED_INT, 0);
   }
-  static int indent = 0;
-  indent++;
-  for (int i = 1; i < indent; i++)
-    std::cout << "| ";
-  std::cout << name;
-  if (mesh != nullptr)
-    std::cout << " (MESH)";
-  std::cout << std::endl;
+  // static int indent = 0;
+  // indent++;
+  // for (int i = 1; i < indent; i++)
+  //   std::cout << "| ";
+  // std::cout << name;
+  // if (mesh != nullptr)
+  //   std::cout << " (MESH)";
+  // std::cout << std::endl;
   for (auto child : children) {
     child->render(camera, cur);
   }
-  indent--;
+  // indent--;
 }

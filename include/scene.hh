@@ -10,8 +10,8 @@ public:
   void render();
   void update();
   void instantiate(std::shared_ptr<Model> model);
+  std::shared_ptr<Object> rootObject;
 
 private:
   Camera &camera;
-  std::shared_ptr<Object> rootObject;
 };
