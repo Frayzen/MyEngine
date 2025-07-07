@@ -1,5 +1,6 @@
 #include "shader.hh"
 #include "glad/glad.h"
+#include "utils.hh"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -25,7 +26,7 @@ static unsigned int createShader(const std::string path, GLenum shaderType) {
     glGetShaderInfoLog(shader, 512, nullptr, infoLog);
     std::cerr << "ERROR::SHADER::COMPILATION_FAILED " << path << "\n "
               << infoLog << std::endl;
-    return 0;
+    exit(1);
   }
   return shader;
 }
@@ -38,9 +39,23 @@ Shader::Shader(const std::string vertexShaderPath,
   glAttachShader(shaderProgram, vertexShader);
   glAttachShader(shaderProgram, fragmentShader);
   glLinkProgram(shaderProgram);
+
+  int success;
+  char infoLog[512];
+  glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+  if (!success) {
+    glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
+    std::cerr << "ERROR::SHADER_PROGRAM::COMPILATION_FAILED " << "\n "
+              << infoLog << std::endl;
+    exit(1);
+  }
+  GL_ERR;
 }
 
-void Shader::activate() { glUseProgram(shaderProgram); }
+void Shader::activate() {
+  FAIL_ON(!shaderProgram, "Cannot link program");
+  glUseProgram(shaderProgram);
+}
 
 Shader::~Shader() {
   glDeleteShader(vertexShader);
@@ -48,6 +63,6 @@ Shader::~Shader() {
   glDeleteProgram(shaderProgram);
 }
 
-unsigned int Shader::loc(const std::string name) {
+unsigned int Shader::loc(const std::string name) const {
   return glGetUniformLocation(shaderProgram, name.c_str());
 }

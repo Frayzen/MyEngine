@@ -1,5 +1,10 @@
 #include "window.hh"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include "scene.hh"
+#include "utils.hh"
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
@@ -52,6 +57,7 @@ int Window::setupWindow(int width, int height, const char *title) {
             (void)message;
             (void)userParam;
             std::cerr << "OpenGL Debug: " << message << std::endl;
+            // exit(1);
           }
         },
         nullptr);
@@ -62,6 +68,21 @@ int Window::setupWindow(int width, int height, const char *title) {
   glEnable(GL_CULL_FACE);
   glCullFace(GL_FRONT);
 
+  // Setup Dear ImGui context
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+
+  // Setup Platform/Renderer backends
+  ImGui_ImplGlfw_InitForOpenGL(
+      window, true); // Second param install_callback=true will install
+                     // GLFW callbacks and chain to existing ones.
+  ImGui_ImplOpenGL3_Init();
+
   return 0;
 }
 
@@ -69,10 +90,19 @@ void Window::run(Scene &scene) {
   double previousTime = glfwGetTime();
 
   while (!glfwWindowShouldClose(window)) {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    // ImGui::ShowDemoWindow(); // Show demo window! :)
+    glfwPollEvents();
+
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     scene.update();
     scene.render();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     double currentTime = glfwGetTime();
     glm::mat4 rotationMatrix =
@@ -85,12 +115,15 @@ void Window::run(Scene &scene) {
     // std::cout << "dt " << deltaTime << std::endl;
     previousTime = currentTime;
 
-    glfwPollEvents();
     glfwSwapBuffers(window);
+    GL_ERR;
   }
 }
 
 Window::~Window() {
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
   if (glfwGetCurrentContext() != nullptr)
     glfwDestroyWindow(glfwGetCurrentContext());
   glfwTerminate();

@@ -10,10 +10,13 @@ uniform mat4 projection;
 
 out vec2 TexCoords;
 out vec3 Normal;
+out vec4 WorldPosition;
 
 void main()
 {
     TexCoords = aTexCoords;    
-    Normal = aNormal;
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    // matrix inversions are expensive, we can calculate this on the CPU and pass it as a uniform later
+    Normal = normalize(mat3(transpose(inverse(view * model))) * aNormal);
+    WorldPosition = view * model * vec4(aPos, 1.0);
+    gl_Position = projection * WorldPosition;
 }

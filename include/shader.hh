@@ -7,7 +7,7 @@ public:
          const std::string fragmentShaderPath);
   ~Shader();
   void activate();
-  unsigned int loc(const std::string name);
+  unsigned int loc(const std::string name) const;
 
 private:
   unsigned int vertexShader;

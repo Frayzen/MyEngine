@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <glad/glad.h>
 
+#include "camera.hh"
 #include "vertex.hh"
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
@@ -59,6 +60,7 @@ void Mesh::setVertices(std::vector<Vertex> vertices,
                        std::vector<glm::uvec3> tris) {
   if (vertices.empty() || tris.empty()) {
     std::cerr << "Error: Empty vertex or index data!" << std::endl;
+    VAO = 0;
     return;
   }
   for (const auto &tri : tris) {
@@ -120,13 +122,15 @@ Mesh::~Mesh() {
     glDeleteBuffers(1, &EBO);
 }
 
-void Mesh::activate() {
+bool Mesh::activate(const Camera &cam) {
   if (VAO == 0) {
     std::cerr << "Error: VAO not initialized!" << std::endl;
+    return false;
   }
   glBindVertexArray(VAO);
   if (material)
-    material->activate();
+    material->activate(cam);
+  return true;
 }
 
 unsigned int Mesh::getAmountTris() { return amountTris; }

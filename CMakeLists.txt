@@ -15,6 +15,7 @@ add_executable(MyEngine ${sources} ${cpp_sources})
 target_compile_options(MyEngine PUBLIC -Wall -Wextra -Werror -pedantic -std=c++20)
 
 target_include_directories(MyEngine PUBLIC ./include)
+target_include_directories(MyEngine PUBLIC ./include/imgui/)
 
 target_link_libraries(MyEngine OpenGL::GL)
 target_link_libraries(MyEngine assimp)

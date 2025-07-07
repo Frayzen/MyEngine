@@ -33,8 +33,9 @@ void Object::render(Camera &camera, glm::mat4 parentMat) {
   glm::mat4 cur = parentMat * transform.getModelMat();
   if (mesh != nullptr) {
     glUniformMatrix4fv(camera.shader.loc("model"), 1, GL_FALSE, &cur[0][0]);
-    mesh->activate();
-    glDrawElements(GL_TRIANGLES, mesh->getAmountTris() * 3, GL_UNSIGNED_INT, 0);
+    if (mesh->activate(camera))
+      glDrawElements(GL_TRIANGLES, mesh->getAmountTris() * 3, GL_UNSIGNED_INT,
+                     0);
   }
   // static int indent = 0;
   // indent++;

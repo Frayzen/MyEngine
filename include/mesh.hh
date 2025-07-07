@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.hh"
 #include "material.hh"
 #include "vertex.hh"
 #include <assimp/mesh.h>
@@ -12,7 +13,7 @@ public:
   Mesh() {};
   Mesh(const aiMesh *mesh);
   void setVertices(std::vector<Vertex> vertices, std::vector<glm::uvec3> tris);
-  void activate();
+  bool activate(const Camera &cam);
   unsigned int getAmountTris();
 
   ~Mesh();
