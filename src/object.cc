@@ -3,6 +3,8 @@
 #include "mesh.hh"
 #include "transform.hh"
 #include <glm/ext/matrix_float4x4.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 #include <iostream>
 
 static std::shared_ptr<Object> createFromModel(std::shared_ptr<Model> model) {
@@ -33,9 +35,15 @@ void Object::render(Camera &camera, glm::mat4 parentMat) {
   glm::mat4 cur = parentMat * transform.getModelMat();
   if (mesh != nullptr) {
     glUniformMatrix4fv(camera.shader.loc("model"), 1, GL_FALSE, &cur[0][0]);
-    if (mesh->activate(camera))
+    if (mesh->activate(camera)) {
+      // TODO add imgui option for style
+      // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       glDrawElements(GL_TRIANGLES, mesh->getAmountTris() * 3, GL_UNSIGNED_INT,
                      0);
+      // TODO remove that
+      glFinish();
+    } else
+      std::cerr << "ERROR ACTIVATING " << name << std::endl;
   }
   // static int indent = 0;
   // indent++;
@@ -43,7 +51,7 @@ void Object::render(Camera &camera, glm::mat4 parentMat) {
   //   std::cout << "| ";
   // std::cout << name;
   // if (mesh != nullptr)
-  //   std::cout << " (MESH)";
+  //   std::cout << " (MESH)" << mesh->getAmountTris();
   // std::cout << std::endl;
   for (auto child : children) {
     child->render(camera, cur);

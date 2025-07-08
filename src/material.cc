@@ -31,15 +31,37 @@ static GLuint WhitePixelTexture() {
   return textureID;
 }
 
+static void applyMappingMode(const aiTextureMapMode &mode, GLuint text_wrap) {
+  switch (mode) {
+  case aiTextureMapMode_Wrap:
+    glTexParameteri(GL_TEXTURE_2D, text_wrap, GL_REPEAT);
+    break;
+  case aiTextureMapMode_Clamp:
+    glTexParameteri(GL_TEXTURE_2D, text_wrap, GL_CLAMP_TO_EDGE);
+    break;
+  case aiTextureMapMode_Decal:
+    // Note: OpenGL doesn't have a direct "Decal" mode, but GL_CLAMP_TO_BORDER
+    // with a transparent border can be used.
+    glTexParameteri(GL_TEXTURE_2D, text_wrap, GL_CLAMP_TO_BORDER);
+    break;
+  case aiTextureMapMode_Mirror:
+    glTexParameteri(GL_TEXTURE_2D, text_wrap, GL_MIRRORED_REPEAT);
+    break;
+  case _aiTextureMapMode_Force32Bit:
+    // This is just a sentinel value, not a real mode. Use default (REPEAT).
+    glTexParameteri(GL_TEXTURE_2D, text_wrap, GL_REPEAT);
+    break;
+  }
+}
+
 static GLuint load(const aiMaterial *mat, aiTextureType type,
                    std::filesystem::path folderRoot) {
   // Diffuse maps
   int numTextures = mat->GetTextureCount(type);
   aiString fileName;
   std::cout << "Texcount " << numTextures << std::endl;
-  if (numTextures > 0 &&
-      mat->GetTexture(aiTextureType_DIFFUSE, 0, &fileName, NULL, NULL, NULL,
-                      NULL, NULL) == AI_SUCCESS) {
+  if (numTextures > 0 && mat->GetTexture(type, 0, &fileName, NULL, NULL, NULL,
+                                         NULL, NULL) == AI_SUCCESS) {
     int width, height, nrChannels;
     auto path = folderRoot.append(fileName.C_Str());
     stbi_set_flip_vertically_on_load(true);
@@ -50,9 +72,12 @@ static GLuint load(const aiMaterial *mat, aiTextureType type,
     glGenTextures(1, &buffer);
     glBindTexture(GL_TEXTURE_2D, buffer);
 
-    // set the texture wrapping/filtering options
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    aiTextureMapMode mode;
+    mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mode);
+    applyMappingMode(mode, GL_TEXTURE_WRAP_S);
+    mat->Get(AI_MATKEY_MAPPINGMODE_V(type, 0), mode);
+    applyMappingMode(mode, GL_TEXTURE_WRAP_T);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                     GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -90,32 +115,27 @@ Material::Material(std::filesystem::path path, const aiMaterial *mat) {
   FAIL_ON(ret != AI_SUCCESS, "Failed to load a material");
 
   // Load textures
-  if ((mapKa = load(mat, aiTextureType_AMBIENT, path))) {
-    Ka = glm::vec3(1.0f);
-  }
-  if ((mapKd = load(mat, aiTextureType_DIFFUSE, path))) {
-    Kd = glm::vec3(1.0f);
-    // textureMask_ |= DIFFUSE_TEXMASK;
-  }
-  if ((mapKs = load(mat, aiTextureType_SPECULAR, path))) {
-    Ks = glm::vec3(1.0f);
-    // m.textureMask_ |= SPECULAR_TEXMASK;
-  }
-  // if ((m.normalMap_ = load(mat, aiTextureType_NORMALS, folderRoot)))
-  //   m.textureMask_ |= NORMAL_MAPMASK;
+  mapKa = load(mat, aiTextureType_AMBIENT, path);
+  mapKd = load(mat, aiTextureType_DIFFUSE, path);
+  mapKs = load(mat, aiTextureType_SPECULAR, path);
 
   // // Load colors and scalars
   // mat->Get(AI_MATKEY_OPACITY, m.opacity);
 
   aiColor3D c;
-  if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_AMBIENT, c))
-    Ka = glm::vec3(c.r, c.g, c.b);
-  if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE, c))
-    Kd = glm::vec3(c.r, c.g, c.b);
   if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_SPECULAR, c))
     Ks = glm::vec3(c.r, c.g, c.b);
-  // if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_EMISSIVE, c))
-  //   m.emissiveCol = glm::vec3(c.r, c.g, c.b);
+  if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE, c))
+    Kd = glm::vec3(c.r, c.g, c.b);
+  if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_AMBIENT, c)) {
+    Ka = glm::vec3(c.r, c.g, c.b);
+    if (Ka == glm::vec3(1, 1, 1)) {
+      // Ambient was likely unset—ignore or override.
+      Ka = Kd;
+      if (mapKa == WhitePixelTexture())
+        mapKa = mapKd;
+    }
+  }
 
   int boolean;
   int val;
@@ -125,6 +145,8 @@ Material::Material(std::filesystem::path path, const aiMaterial *mat) {
     shininess = val;
   if (AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS_STRENGTH, val))
     shininess_strength = val;
+  if (AI_SUCCESS == mat->Get(AI_MATKEY_BLEND_FUNC, val))
+    additiveBlend = val == aiBlendMode::aiBlendMode_Additive;
 
   // Print informations
   std::cout << "Material " << materialName.C_Str() << " loaded" << std::endl;
@@ -144,6 +166,11 @@ void Material::activate(const Camera &cam) {
     glDisable(GL_CULL_FACE);
   else
     glEnable(GL_CULL_FACE);
+
+  if (additiveBlend)
+    glBlendFunc(GL_ONE, GL_ONE);
+  else
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, mapKa);

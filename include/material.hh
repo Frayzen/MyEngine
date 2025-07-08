@@ -13,9 +13,9 @@ public:
   void activate(const Camera &cam);
 
 private:
-  glm::vec3 Kd, Ka, Ks;
+  glm::vec3 Kd, Ka, Ks = glm::vec3(0);
   unsigned int mapKa, mapKd, mapKs;
   float shininess, shininess_strength = 1.0f;
 
-  bool disableCulling = false;
+  bool disableCulling, additiveBlend = false;
 };

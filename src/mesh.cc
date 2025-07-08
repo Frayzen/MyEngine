@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 
 #include "camera.hh"
+#include "utils.hh"
 #include "vertex.hh"
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
@@ -105,15 +106,15 @@ void Mesh::setVertices(std::vector<Vertex> vertices,
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glEnableVertexAttribArray(2);
-  glBindVertexArray(0);
+
   amountTris = tris.size();
   assert(amountTris != 0);
+
+  glBindVertexArray(0);
+  GL_ERR;
 }
 
 Mesh::~Mesh() {
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
-  glDisableVertexAttribArray(2);
   if (VAO)
     glDeleteVertexArrays(1, &VAO);
   if (VBO)
@@ -123,13 +124,13 @@ Mesh::~Mesh() {
 }
 
 bool Mesh::activate(const Camera &cam) {
-  if (VAO == 0) {
-    std::cerr << "Error: VAO not initialized!" << std::endl;
+  if (VAO == 0)
     return false;
-  }
   glBindVertexArray(VAO);
-  if (material)
-    material->activate(cam);
+  GL_ERR;
+  (void)cam;
+  // if (material)
+  // material->activate(cam);
   return true;
 }
 

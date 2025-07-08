@@ -20,7 +20,7 @@ uniform float shininess_strength;
 void main()
 {    
     // Light direction (in view space, since WorldPosition is in view space)
-    vec3 lightDir = normalize(vec3(0,1,0));
+    vec3 lightDir = normalize(vec3(0,-1,0));
     
     // View direction (in view space this is just the negative of the position)
     vec3 viewDir = normalize(-WorldPosition.xyz);
@@ -39,5 +39,4 @@ void main()
     vec4 specular = texture(mapKs, TexCoords) * vec4(Ks, 1) * spec * shininess_strength;
 
     FragColor = ambient + diffuse + specular;
-    FragColor = texture(mapKd, TexCoords);
 }
