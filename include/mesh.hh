@@ -10,7 +10,7 @@
 
 class Mesh {
 public:
-  Mesh() {};
+  Mesh() = default;
   Mesh(const aiMesh *mesh);
   void setVertices(std::vector<Vertex> vertices, std::vector<glm::uvec3> tris);
   bool activate(const Camera &cam);
@@ -23,6 +23,6 @@ public:
 private:
   std::shared_ptr<Material> material;
 
-  unsigned int VBO, VAO, EBO;
+  unsigned int VBO, VAO, EBO = 0;
   unsigned int amountTris;
 };

@@ -51,7 +51,7 @@ void Object::render(Camera &camera, glm::mat4 parentMat) {
   //   std::cout << "| ";
   // std::cout << name;
   // if (mesh != nullptr)
-  //   std::cout << " (MESH)" << mesh->getAmountTris();
+  //   std::cout << " (MESH)" << mesh.get();
   // std::cout << std::endl;
   for (auto child : children) {
     child->render(camera, cur);

@@ -73,10 +73,10 @@ void Mesh::setVertices(std::vector<Vertex> vertices,
   }
   assert(sizeof(Vertex) == sizeof(float) * 8);
 
-  if (VAO)
-    glDeleteVertexArrays(1, &VAO);
-  if (VBO)
-    glDeleteBuffers(1, &VBO);
+  if (VAO || VBO) {
+    std::cerr << "Cannot assign vertices twice" << std::endl;
+    exit(1);
+  }
 
   // Generate VAO
   glGenVertexArrays(1, &VAO);
@@ -115,22 +115,25 @@ void Mesh::setVertices(std::vector<Vertex> vertices,
 }
 
 Mesh::~Mesh() {
-  if (VAO)
-    glDeleteVertexArrays(1, &VAO);
+  glBindVertexArray(VAO);
   if (VBO)
     glDeleteBuffers(1, &VBO);
   if (EBO)
     glDeleteBuffers(1, &EBO);
+  glBindVertexArray(0);
+  if (VAO)
+    glDeleteVertexArrays(1, &VAO);
 }
 
 bool Mesh::activate(const Camera &cam) {
+  // std::cout << "VAO IS " << VAO << std::endl;
   if (VAO == 0)
     return false;
   glBindVertexArray(VAO);
   GL_ERR;
   (void)cam;
-  // if (material)
-  // material->activate(cam);
+  if (material)
+    material->activate(cam);
   return true;
 }
 

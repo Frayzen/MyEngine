@@ -107,7 +107,8 @@ static GLuint load(const aiMaterial *mat, aiTextureType type,
   return WhitePixelTexture();
 }
 
-Material::Material(std::filesystem::path path, const aiMaterial *mat) {
+Material::Material(std::filesystem::path path, const aiMaterial *mat)
+    : Material() {
   (void)path;
   aiString materialName;
   aiReturn ret;
@@ -138,15 +139,18 @@ Material::Material(std::filesystem::path path, const aiMaterial *mat) {
   }
 
   int boolean;
-  int val;
+  int i_val;
+  float f_val;
   if (AI_SUCCESS == mat->Get(AI_MATKEY_TWOSIDED, boolean))
     disableCulling = boolean;
-  if (AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS, val))
-    shininess = val;
-  if (AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS_STRENGTH, val))
-    shininess_strength = val;
-  if (AI_SUCCESS == mat->Get(AI_MATKEY_BLEND_FUNC, val))
-    additiveBlend = val == aiBlendMode::aiBlendMode_Additive;
+  if (AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS, i_val))
+    shininess = i_val;
+  if (AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS_STRENGTH, i_val))
+    shininess_strength = i_val;
+  if (AI_SUCCESS == mat->Get(AI_MATKEY_BLEND_FUNC, i_val))
+    additiveBlend = i_val == aiBlendMode::aiBlendMode_Additive;
+  if (AI_SUCCESS == mat->Get(AI_MATKEY_REFLECTIVITY, f_val))
+    reflectivity = f_val;
 
   // Print informations
   std::cout << "Material " << materialName.C_Str() << " loaded" << std::endl;
@@ -156,6 +160,7 @@ Material::Material(std::filesystem::path path, const aiMaterial *mat) {
   std::cout << "  Ks = " << glm::to_string(Ks) << std::endl;
   std::cout << "  shininess = " << shininess << std::endl;
   std::cout << "  shininess_strength = " << shininess_strength << std::endl;
+  std::cout << "  reflectivity = " << reflectivity << std::endl;
   // int textCount =
   //     (m.diffuseText_ != 0) + (m.ambientText_ != 0) + (m.specularText_ != 0);
   // std::cout << "(" << textCount << "textures)" << '\n';
