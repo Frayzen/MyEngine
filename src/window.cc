@@ -1,8 +1,6 @@
 #include "window.hh"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 
+#include "interface.hh"
 #include "scene.hh"
 #include "utils.hh"
 #include <glm/ext/matrix_transform.hpp>
@@ -12,6 +10,8 @@
 // Error callback function
 static void glfw_error_callback(int error, const char *description) {
   fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+  while (1)
+    ;
 }
 
 static void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
@@ -19,7 +19,7 @@ static void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-int Window::setupWindow(int width, int height, const char *title) {
+Window::Window(int width, int height, const char *title) {
   glfwSetErrorCallback(glfw_error_callback);
 
   glfwInit();
@@ -31,15 +31,12 @@ int Window::setupWindow(int width, int height, const char *title) {
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
   window = glfwCreateWindow(width, height, title, nullptr, nullptr);
-  if (!window)
-    return 1;
+  FAIL_ON(!window, "Could not create glfw window.");
   glfwMakeContextCurrent(window);
 
   // NO OPENGL CODE BEFORE THIS
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "Failed to initialize GLAD" << std::endl;
-    return -1;
-  }
+  FAIL_ON(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress),
+          "Failed to initialize GLAD");
 
   if (GLAD_GL_KHR_debug) {
     glEnable(GL_DEBUG_OUTPUT);
@@ -70,41 +67,21 @@ int Window::setupWindow(int width, int height, const char *title) {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  // Setup Dear ImGui context
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGuiIO &io = ImGui::GetIO();
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-
-  // Setup Platform/Renderer backends
-  ImGui_ImplGlfw_InitForOpenGL(
-      window, true); // Second param install_callback=true will install
-                     // GLFW callbacks and chain to existing ones.
-  ImGui_ImplOpenGL3_Init();
-
-  return 0;
+  interface = std::make_shared<Interface>(window);
 }
 
 void Window::run(Scene &scene) {
   double previousTime = glfwGetTime();
 
   while (!glfwWindowShouldClose(window)) {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    // ImGui::ShowDemoWindow(); // Show demo window! :)
     glfwPollEvents();
-
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    interface->update(scene);
+
     scene.update();
     scene.render();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     double currentTime = glfwGetTime();
     glm::mat4 rotationMatrix =
@@ -123,9 +100,7 @@ void Window::run(Scene &scene) {
 }
 
 Window::~Window() {
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
+  interface->destroy();
   if (glfwGetCurrentContext() != nullptr)
     glfwDestroyWindow(glfwGetCurrentContext());
   glfwTerminate();

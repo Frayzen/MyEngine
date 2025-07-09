@@ -11,12 +11,10 @@ int main() {
   const int width = 1200;
   const int heigth = 800;
 
-  Window window;
-  if (window.setupWindow(width, heigth, "Test"))
-    return 1;
+  Window window(width, heigth, "Test");
   auto m = //
-      Model::loadModel("./assets/iron-man/source/Og.fbx");
-  // Model::loadModel("./assets/teapot.obj");
+           // Model::loadModel("./assets/iron-man/source/Og.fbx");
+      Model::loadModel("./assets/teapot.obj");
   // Model::loadModel("./assets/Link/Link.obj");
   // Model::loadModel(
   // "./assets/big-ironman/Iron_Man_Mark_44_Hulkbuster_fbx.FBX");
