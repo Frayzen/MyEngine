@@ -1,9 +1,9 @@
 #pragma once
 
-#include "camera.hh"
 #include <assimp/material.h>
 #include <filesystem>
 #include <glm/ext/vector_float3.hpp>
+#include "render/camera.hh"
 class Material {
 public:
   Material() = default;

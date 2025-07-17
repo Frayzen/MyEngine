@@ -1,11 +1,11 @@
-#include "window.hh"
+#include "render/window.hh"
 
-#include "interface.hh"
-#include "scene.hh"
-#include "utils.hh"
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
+#include "render/interface.hh"
+#include "render/scene.hh"
+#include "render/utils.hh"
 
 // Error callback function
 static void glfw_error_callback(int error, const char *description) {

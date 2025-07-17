@@ -1,11 +1,8 @@
-#include "mesh.hh"
+#include "render/mesh.hh"
 
-#include <cstddef>
 #include <glad/glad.h>
+#include <cstddef>
 
-#include "camera.hh"
-#include "utils.hh"
-#include "vertex.hh"
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
 #include <assimp/postprocess.h>
@@ -13,6 +10,9 @@
 #include <glm/ext/vector_uint3.hpp>
 #include <iostream>
 #include <vector>
+#include "render/camera.hh"
+#include "render/utils.hh"
+#include "render/vertex.hh"
 
 Mesh::Mesh(const aiMesh *mesh) : Mesh() {
   std::vector<Vertex> vertices;

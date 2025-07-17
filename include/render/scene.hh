@@ -1,8 +1,8 @@
 #pragma once
 
-#include "camera.hh"
-#include "model.hh"
-#include "object.hh"
+#include "render/camera.hh"
+#include "render/model.hh"
+#include "render/object.hh"
 class Scene {
 public:
   Scene(Camera &cam);

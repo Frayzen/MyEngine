@@ -1,8 +1,8 @@
 #pragma once
 
-#include "shader.hh"
-#include "transform.hh"
 #include <glm/ext/matrix_float4x4.hpp>
+#include "render/shader.hh"
+#include "render/transform.hh"
 class Camera {
 public:
   Camera(float fov, float aspect, float near, float far)

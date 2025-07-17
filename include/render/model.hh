@@ -1,8 +1,8 @@
 #pragma once
 
-#include "mesh.hh"
-#include "transform.hh"
 #include <memory>
+#include "render/mesh.hh"
+#include "render/transform.hh"
 
 // A Model is a hierarchy of meshes ready to be instantiated as objects
 class Model {

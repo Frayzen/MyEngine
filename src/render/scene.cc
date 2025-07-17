@@ -1,8 +1,8 @@
-#include "scene.hh"
 #include "glad/glad.h"
-#include "object.hh"
 #include <glm/ext/matrix_float4x4.hpp>
 #include <memory>
+#include "render/object.hh"
+#include "render/scene.hh"
 
 Scene::Scene(Camera &cam) : camera(cam) {
   rootObject = std::make_shared<Object>("root", nullptr, Transform());

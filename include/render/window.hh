@@ -1,9 +1,9 @@
 #pragma once
 
-#include "glad/glad.h"
-#include "interface.hh"
-#include "scene.hh"
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "render/interface.hh"
+#include "render/scene.hh"
 
 class Window {
 public:

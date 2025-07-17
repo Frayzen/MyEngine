@@ -1,11 +1,12 @@
-#include "camera.hh"
-#include "model.hh"
-#include "scene.hh"
-#include "window.hh"
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/quaternion_float.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include "render/camera.hh"
+#include "render/model.hh"
+#include "render/scene.hh"
+#include "render/window.hh"
 
 int main() {
   const int width = 1200;

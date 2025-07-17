@@ -1,9 +1,9 @@
-#include "shader.hh"
 #include "glad/glad.h"
-#include "utils.hh"
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "render/shader.hh"
+#include "render/utils.hh"
 
 static std::string readFile(const std::string path) {
   std::ifstream t(path);

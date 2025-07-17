@@ -1,7 +1,7 @@
 #pragma once
 
-#include "scene.hh"
 #include <GLFW/glfw3.h>
+#include "render/scene.hh"
 class Interface {
 public:
   Interface(GLFWwindow *window);

@@ -1,9 +1,5 @@
-#include "model.hh"
+#include "render/model.hh"
 
-#include "material.hh"
-#include "mesh.hh"
-#include "transform.hh"
-#include "utils.hh"
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
 #include <assimp/postprocess.h>
@@ -13,6 +9,10 @@
 #include <filesystem>
 #include <memory>
 #include <vector>
+#include "render/material.hh"
+#include "render/mesh.hh"
+#include "render/transform.hh"
+#include "render/utils.hh"
 
 struct ModelBuilder {
   const aiScene *scene;

@@ -1,4 +1,4 @@
-#include "camera.hh"
+#include "render/camera.hh"
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_clip_space.hpp>
 

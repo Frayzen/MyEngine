@@ -1,8 +1,8 @@
-#include "object.hh"
 #include "glad/glad.h"
-#include "mesh.hh"
-#include "transform.hh"
 #include <glm/ext/matrix_float4x4.hpp>
+#include "render/mesh.hh"
+#include "render/object.hh"
+#include "render/transform.hh"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>

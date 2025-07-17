@@ -1,12 +1,12 @@
 #pragma once
 
-#include "camera.hh"
-#include "material.hh"
-#include "vertex.hh"
 #include <assimp/mesh.h>
 #include <glm/ext/vector_uint3.hpp>
 #include <memory>
 #include <vector>
+#include "render/camera.hh"
+#include "render/material.hh"
+#include "render/vertex.hh"
 
 class Mesh {
 public:

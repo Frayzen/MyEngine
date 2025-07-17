@@ -1,14 +1,14 @@
-#include "material.hh"
 #include "glad/glad.h"
-#include "utils.hh"
 #include <assimp/material.h>
 #include <filesystem>
+#include "render/material.hh"
+#include "render/utils.hh"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stbi_load.hh"
+#include "render/stbi_load.hh"
 
 static GLuint WhitePixelTexture() {
   static GLuint textureID;

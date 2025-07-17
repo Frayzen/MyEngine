@@ -1,10 +1,10 @@
-#include "interface.hh"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include "scene.hh"
+#include "render/interface.hh"
 #include <functional>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #include <iostream>
+#include "render/scene.hh"
 
 static void drawHierarchy(const Scene &scene) {
   // Recursive tree drawing function
