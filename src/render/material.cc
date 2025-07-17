@@ -1,7 +1,8 @@
-#include "glad/glad.h"
+#include <glad/glad.h>
 #include <assimp/material.h>
 #include <filesystem>
 #include "render/material.hh"
+#include "render/shader.hh"
 #include "render/utils.hh"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
@@ -166,7 +167,7 @@ Material::Material(std::filesystem::path path, const aiMaterial *mat)
   // std::cout << "(" << textCount << "textures)" << '\n';
 }
 
-void Material::activate(const Camera &cam) {
+void Material::activate(const Shader &shader) {
   if (disableCulling)
     glDisable(GL_CULL_FACE);
   else
@@ -184,15 +185,15 @@ void Material::activate(const Camera &cam) {
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D, mapKs);
 
-  glUniform3f(cam.shader.loc("Ka"), Ka.r, Ka.g, Ka.b);
-  glUniform3f(cam.shader.loc("Kd"), Kd.r, Kd.g, Kd.b);
-  glUniform3f(cam.shader.loc("Ks"), Ks.r, Ks.g, Ks.b);
+  glUniform3f(shader.loc("Ka"), Ka.r, Ka.g, Ka.b);
+  glUniform3f(shader.loc("Kd"), Kd.r, Kd.g, Kd.b);
+  glUniform3f(shader.loc("Ks"), Ks.r, Ks.g, Ks.b);
 
   // 0 = texture unit index (GL_TEXTURE0)
-  glUniform1i(cam.shader.loc("mapKa"), 0);
-  glUniform1i(cam.shader.loc("mapKd"), 1);
-  glUniform1i(cam.shader.loc("mapKs"), 2);
+  glUniform1i(shader.loc("mapKa"), 0);
+  glUniform1i(shader.loc("mapKd"), 1);
+  glUniform1i(shader.loc("mapKs"), 2);
 
-  glUniform1f(cam.shader.loc("shininess"), shininess);
-  glUniform1f(cam.shader.loc("shininess_strength"), shininess_strength);
+  glUniform1f(shader.loc("shininess"), shininess);
+  glUniform1f(shader.loc("shininess_strength"), shininess_strength);
 }

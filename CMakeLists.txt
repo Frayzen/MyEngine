@@ -19,6 +19,13 @@ add_library(imgui STATIC ${imgui_sources} ${imgui_backend_sources})
 target_include_directories(imgui PUBLIC ./imgui)
 target_include_directories(imgui PUBLIC ./imgui/backends/)
 
+# Override compiler flags for imgui target
+target_compile_options(imgui PRIVATE
+    $<$<CONFIG:Debug>: -O2>  # Force optimization level 2 even in Debug
+    $<$<CONFIG:Debug>: -DNDEBUG>  # Define NDEBUG in Debug
+    $<$<NOT:$<CONFIG:Debug>>: -O2>  # Use O2 for other build types
+)
+
 # ENGINE TARGET
 
 file(GLOB_RECURSE cpp_sources src/*.cc)

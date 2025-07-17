@@ -9,7 +9,7 @@ public:
   Material() = default;
   Material(std::filesystem::path path, const aiMaterial *mat);
 
-  void activate(const Camera &cam);
+  void activate(const Shader &shader);
 
 private:
   glm::vec3 Kd, Ka, Ks = glm::vec3(0);

@@ -16,13 +16,13 @@ int main() {
   Window window(width, heigth, "Test");
   auto m = //
            // Model::loadModel("./assets/iron-man/source/Og.fbx");
-      Model::loadModel("./assets/teapot.obj");
-  // Model::loadModel("./assets/Link/Link.obj");
+           // Model::loadModel("./assets/teapot.obj");
+      Model::loadModel("./assets/Link/Link.obj");
   // Model::loadModel(
   // "./assets/big-ironman/Iron_Man_Mark_44_Hulkbuster_fbx.FBX");
 
   Camera cam(90, (1.0 * width) / heigth, 0.1, 1000);
-  cam.transform.position -= glm::vec3(0, 0, 5);
+  cam.transform.position -= glm::vec3(0, 45, 45);
 
   Scene scene(cam);
   scene.instantiate(m);

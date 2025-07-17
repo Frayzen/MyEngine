@@ -12,6 +12,7 @@ public:
   void update();
   void instantiate(std::shared_ptr<Model> model);
   std::shared_ptr<Object> rootObject;
+  std::shared_ptr<Object> highlightedObject;
 
 private:
   Camera &camera;

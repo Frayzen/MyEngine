@@ -6,25 +6,29 @@
 #include <iostream>
 #include "render/scene.hh"
 
-static void drawHierarchy(const Scene &scene) {
+static void drawHierarchy(Scene &scene) {
   // Recursive tree drawing function
-  std::function<void(const std::shared_ptr<Object> &obj)> DrawNode =
-      [&](const std::shared_ptr<Object> &obj) {
+  std::function<void(std::shared_ptr<Object> & obj)> DrawNode =
+      [&](std::shared_ptr<Object> &obj) {
         ImGuiTreeNodeFlags flags =
             ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+        if (obj == scene.highlightedObject)
+          flags |= ImGuiTreeNodeFlags_Selected;
         bool isLeaf = obj->children.empty();
         if (isLeaf)
           flags |=
               ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
         bool is_open = ImGui::TreeNodeEx(obj->name.c_str(), flags);
+        if (ImGui::IsItemClicked())
+          scene.highlightedObject = obj;
 
         // Optional: Add folder/file icons (need an icon font)
         // ImGui::SameLine();
         // ImGui::Text(node.is_folder ? ICON_FA_FOLDER : ICON_FA_FILE);
 
         if (is_open && !isLeaf) {
-          for (const auto &child : obj->children) {
+          for (auto &child : obj->children) {
             DrawNode(child);
           }
           ImGui::TreePop();
@@ -53,7 +57,7 @@ Interface::Interface(GLFWwindow *window) {
   ImGui_ImplOpenGL3_Init();
 }
 
-void Interface::update(const Scene &scene) {
+void Interface::update(Scene &scene) {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
@@ -101,8 +105,11 @@ void Interface::update(const Scene &scene) {
       std::cout << "Command entered: " << inputBuffer << std::endl;
       inputBuffer[0] = '\0';
     }
-    // Auto-focus
-    ImGui::SetKeyboardFocusHere(-1);
+    static bool autofocus = true;
+    if (autofocus) {
+      ImGui::SetKeyboardFocusHere(-1);
+      autofocus = false;
+    }
   }
   ImGui::End();
   ImGui::PopStyleVar(3);

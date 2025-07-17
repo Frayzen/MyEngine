@@ -10,11 +10,11 @@
 #include <glm/ext/vector_uint3.hpp>
 #include <iostream>
 #include <vector>
-#include "render/camera.hh"
 #include "render/utils.hh"
 #include "render/vertex.hh"
 
 Mesh::Mesh(const aiMesh *mesh) : Mesh() {
+  name = mesh->mName.C_Str();
   std::vector<Vertex> vertices;
   std::vector<glm::uvec3> tris;
   Vertex cur;
@@ -125,18 +125,16 @@ Mesh::~Mesh() {
     glDeleteVertexArrays(1, &VAO);
 }
 
-bool Mesh::activate(const Camera &cam) {
-  // std::cout << "VAO IS " << VAO << std::endl;
+bool Mesh::activate() {
   if (VAO == 0)
     return false;
   glBindVertexArray(VAO);
   GL_ERR;
-  (void)cam;
-  if (material)
-    material->activate(cam);
   return true;
 }
 
-unsigned int Mesh::getAmountTris() { return amountTris; }
+unsigned int Mesh::getAmountTris() const { return amountTris; }
 
 void Mesh::setMaterial(std::shared_ptr<Material> mat) { material = mat; }
+
+const std::string &Mesh::getName() const { return name; }

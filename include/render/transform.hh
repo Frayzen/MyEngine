@@ -11,12 +11,12 @@ public:
   glm::vec3 scale;
   glm::quat rotation;
 
-  glm::mat4 getViewMat();
-  glm::mat4 getModelMat();
+  glm::mat4 getViewMat() const;
+  glm::mat4 getModelMat() const;
 
-  glm::vec3 front();
-  glm::vec3 right();
-  glm::vec3 up();
+  glm::vec3 front() const;
+  glm::vec3 right() const;
+  glm::vec3 up() const;
 };
 
 std::ostream &operator<<(std::ostream &os, Transform const &t);

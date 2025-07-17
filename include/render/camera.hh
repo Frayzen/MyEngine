@@ -3,12 +3,14 @@
 #include <glm/ext/matrix_float4x4.hpp>
 #include "render/shader.hh"
 #include "render/transform.hh"
+
 class Camera {
 public:
   Camera(float fov, float aspect, float near, float far)
-      : shader("./assets/shaders/basic.vert", "./assets/shaders/basic.frag"),
+      : shader("./assets/shaders/basic.vert", "./assets/shaders/basic.frag",
+               true),
         fov(fov), near(near), far(far), aspect(aspect) {};
-  glm::mat4 getPerspectiveMat();
+  glm::mat4 getPerspectiveMat() const;
   void update();
 
   Transform transform;

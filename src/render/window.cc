@@ -1,5 +1,7 @@
+#include "glad/glad.h"
 #include "render/window.hh"
 
+#include <GL/glext.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
@@ -29,6 +31,7 @@ Window::Window(int width, int height, const char *title) {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+  glfwWindowHint(GLFW_DEPTH_BITS, 24); // Request depth buffer
 
   window = glfwCreateWindow(width, height, title, nullptr, nullptr);
   FAIL_ON(!window, "Could not create glfw window.");
@@ -53,18 +56,23 @@ Window::Window(int width, int height, const char *title) {
             (void)length;
             (void)message;
             (void)userParam;
-            std::cerr << "OpenGL Debug: " << message << std::endl;
-            // exit(1);
+            if (severity == GL_DEBUG_SEVERITY_HIGH)
+              std::cerr << "OpenGL Error: " << message << std::endl;
+            // while (1)
+            //   ;
           }
         },
         nullptr);
   }
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
   glViewport(0, 0, width, height);
+
+  glFrontFace(GL_CW);
+
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
-  glCullFace(GL_FRONT);
   glEnable(GL_BLEND);
+
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   interface = std::make_shared<Interface>(window);
@@ -75,19 +83,20 @@ void Window::run(Scene &scene) {
 
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
+    glDepthMask(GL_TRUE);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    interface->update(scene);
 
     scene.update();
     scene.render();
 
+    interface->update(scene);
+
     double currentTime = glfwGetTime();
-    glm::mat4 rotationMatrix =
-        glm::rotate(glm::mat4(1.0f), glm::radians((float)currentTime * 30),
-                    glm::vec3(0.0f, 1.0f, 0.0f));
-    scene.rootObject->transform.rotation = glm::quat_cast(rotationMatrix);
+    // glm::mat4 rotationMatrix =
+    //     glm::rotate(glm::mat4(1.0f), glm::radians((float)currentTime * 30),
+    //                 glm::vec3(0.0f, 1.0f, 0.0f));
+    // scene.rootObject->transform.rotation = glm::quat_cast(rotationMatrix);
 
     double deltaTime = currentTime - previousTime;
     (void)deltaTime;
