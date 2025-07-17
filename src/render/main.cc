@@ -6,6 +6,7 @@
 #include "render/camera.hh"
 #include "render/model.hh"
 #include "render/scene.hh"
+#include "render/shader.hh"
 #include "render/window.hh"
 
 int main() {
@@ -21,6 +22,7 @@ int main() {
   // "./assets/big-ironman/Iron_Man_Mark_44_Hulkbuster_fbx.FBX");
 
   Camera cam(90, (1.0 * width) / heigth, 0.1, 1000);
+  cam.transform.position -= glm::vec3(0, 0, 5);
 
   Scene scene(cam);
   scene.instantiate(m);

@@ -6,8 +6,8 @@
 class Camera {
 public:
   Camera(float fov, float aspect, float near, float far)
-      : shader("./assets/vertex.glsl", "./assets/fragment.glsl"), fov(fov),
-        near(near), far(far), aspect(aspect) {};
+      : shader("./assets/shaders/basic.vert", "./assets/shaders/basic.frag"),
+        fov(fov), near(near), far(far), aspect(aspect) {};
   glm::mat4 getPerspectiveMat();
   void update();
 

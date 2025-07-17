@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glm/ext/matrix_float4x4.hpp>
 #include <memory>
 #include <vector>
 #include "render/camera.hh"
@@ -12,10 +13,14 @@ public:
          const Transform transform);
 
   std::shared_ptr<Object> instantiate(std::shared_ptr<Model> model);
-  void render(Camera &camera, glm::mat4 parentMat);
+  void render(Camera &camera);
+  void cacheModelMats(const glm::mat4 &parentMat);
 
   std::string name;
   Transform transform;
   std::shared_ptr<Mesh> mesh;
   std::vector<std::shared_ptr<Object>> children;
+
+private:
+  glm::mat4 modelMat;
 };

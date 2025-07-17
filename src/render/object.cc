@@ -30,11 +30,18 @@ std::shared_ptr<Object> Object::instantiate(std::shared_ptr<Model> model) {
   return created;
 }
 
-void Object::render(Camera &camera, glm::mat4 parentMat) {
+void Object::cacheModelMats(const glm::mat4 &parentMat) {
+  modelMat = parentMat * transform.getModelMat();
+  for (auto child : children) {
+    child->cacheModelMats(modelMat);
+  }
+}
 
-  glm::mat4 cur = parentMat * transform.getModelMat();
+void Object::render(Camera &camera) {
+
   if (mesh != nullptr) {
-    glUniformMatrix4fv(camera.shader.loc("model"), 1, GL_FALSE, &cur[0][0]);
+    glUniformMatrix4fv(camera.shader.loc("model"), 1, GL_FALSE,
+                       &modelMat[0][0]);
     if (mesh->activate(camera)) {
       // TODO add imgui option for style
       // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -54,7 +61,7 @@ void Object::render(Camera &camera, glm::mat4 parentMat) {
   //   std::cout << " (MESH)" << mesh.get();
   // std::cout << std::endl;
   for (auto child : children) {
-    child->render(camera, cur);
+    child->render(camera);
   }
   // indent--;
 }

@@ -3,6 +3,7 @@
 #include "render/camera.hh"
 #include "render/model.hh"
 #include "render/object.hh"
+#include "render/shader.hh"
 class Scene {
 public:
   Scene(Camera &cam);
@@ -14,4 +15,6 @@ public:
 
 private:
   Camera &camera;
+
+  Shader highlightShader;
 };
