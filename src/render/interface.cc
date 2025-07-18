@@ -6,6 +6,8 @@
 #include <iostream>
 #include "render/scene.hh"
 
+static bool inputFocusRequest = true;
+
 static void drawHierarchy(Scene &scene) {
   // Recursive tree drawing function
   std::function<void(std::shared_ptr<Object> & obj)> DrawNode =
@@ -57,6 +59,124 @@ Interface::Interface(GLFWwindow *window) {
   ImGui_ImplOpenGL3_Init();
 }
 
+// Add these global variables near your InputCallback
+static std::vector<std::string> completionCandidates = {
+    "hello", "world", "imgui",  "imgui2", "imgui3",
+    "demo",  "scene", "object", "render"};
+static size_t currentCandidate = 0;
+static bool showCompletionPopup = true;
+static std::string currentInputPrefix;
+
+int InputCallback(ImGuiInputTextCallbackData *data) {
+  // Get current word prefix
+  const char *word_end = data->Buf + data->CursorPos;
+  const char *word_start = word_end;
+  while (word_start > data->Buf) {
+    const char c = word_start[-1];
+    if (c == ' ' || c == '\t' || c == ',' || c == ';')
+      break;
+    word_start--;
+  }
+
+  currentInputPrefix = std::string(word_start, word_end);
+
+  // Filter candidates based on prefix
+  std::vector<std::string> filteredCandidates;
+  for (const auto &candidate : completionCandidates) {
+    if (candidate.find(currentInputPrefix) == 0) {
+      filteredCandidates.push_back(candidate);
+    }
+  }
+
+  if (!filteredCandidates.empty()) {
+    // Show popup next frame
+    showCompletionPopup = true;
+    currentCandidate = 0;
+
+    // If there's only one match, complete it immediately
+    if (filteredCandidates.size() == 1 &&
+        data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+      data->DeleteChars((int)(word_start - data->Buf),
+                        (int)(word_end - word_start));
+      data->InsertChars(data->CursorPos, filteredCandidates[0].c_str());
+    }
+  }
+  inputFocusRequest = true;
+  return 0;
+}
+
+void Interface::destroy() {
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+}
+
+void DrawCompletionPopup(char *inputBuffer, size_t bufferSize) {
+  if (!showCompletionPopup)
+    return;
+
+  // Filter candidates based on current input prefix
+  std::vector<std::string> filteredCandidates;
+  for (const auto &candidate : completionCandidates) {
+    if (candidate.find(currentInputPrefix) == 0) {
+      filteredCandidates.push_back(candidate);
+    }
+  }
+
+  if (filteredCandidates.empty()) {
+    showCompletionPopup = false;
+    return;
+  }
+
+  // Position the popup near the text input
+  ImVec2 pos = ImGui::GetItemRectMin();
+  pos.y -= filteredCandidates.size() * ImGui::GetItemRectSize().y;
+
+  ImGui::SetNextWindowPos(pos);
+  ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 0));
+
+  ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar |
+                           ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                           ImGuiWindowFlags_HorizontalScrollbar;
+
+  if (ImGui::Begin("##CompletionPopup", &showCompletionPopup, flags)) {
+    for (size_t i = 0; i < filteredCandidates.size(); i++) {
+      bool isSelected = (i == currentCandidate);
+      if (ImGui::Selectable(filteredCandidates[i].c_str(), isSelected)) {
+        // User clicked on an item
+        strncpy(inputBuffer, filteredCandidates[i].c_str(), bufferSize - 1);
+        inputBuffer[bufferSize - 1] = '\0';
+        showCompletionPopup = false;
+      }
+
+      if (isSelected) {
+        ImGui::SetItemDefaultFocus();
+      }
+    }
+  }
+  ImGui::End();
+
+  // Handle keyboard navigation in the popup
+  if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) && currentCandidate > 0) {
+    currentCandidate--;
+  }
+  if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) &&
+      currentCandidate < filteredCandidates.size() - 1) {
+    currentCandidate++;
+  }
+  if (ImGui::IsKeyPressed(ImGuiKey_Enter)) {
+    // Apply the current selection
+    strncpy(inputBuffer, filteredCandidates[currentCandidate].c_str(),
+            bufferSize - 1);
+    inputBuffer[bufferSize - 1] = '\0';
+    showCompletionPopup = false;
+    ImGui::SetKeyboardFocusHere(-1); // Refocus the input
+  }
+  if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+    showCompletionPopup = false;
+  }
+}
+
 void Interface::update(Scene &scene) {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
@@ -75,8 +195,7 @@ void Interface::update(Scene &scene) {
   ImGui::SetNextWindowSize(window_size);
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,
-                      ImVec2(5, 3)); // Small padding
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 3));
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
   ImGuiWindowFlags flags =
@@ -87,28 +206,34 @@ void Interface::update(Scene &scene) {
   if (ImGui::Begin("CommandLineInput", nullptr, flags)) {
     static char inputBuffer[256] = "";
 
-    // Style the input to be minimal but visible
     ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 0.7f));
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
 
-    // Full-width input with slight padding
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
-    // Use InputTextWithHint for a cleaner look
     bool enterPressed = ImGui::InputTextWithHint(
         "##Input", "Enter command...", inputBuffer, IM_ARRAYSIZE(inputBuffer),
-        ImGuiInputTextFlags_EnterReturnsTrue);
+        ImGuiInputTextFlags_EnterReturnsTrue |
+            ImGuiInputTextFlags_CallbackEdit |
+            ImGuiInputTextFlags_CallbackHistory |
+            ImGuiInputTextFlags_CallbackCompletion |
+            ImGuiInputTextFlags_NoHorizontalScroll,
+        InputCallback);
+
+    // Draw the completion popup if needed
+    DrawCompletionPopup(inputBuffer, IM_ARRAYSIZE(inputBuffer));
 
     ImGui::PopStyleColor(2);
 
     if (enterPressed && inputBuffer[0] != '\0') {
       std::cout << "Command entered: " << inputBuffer << std::endl;
       inputBuffer[0] = '\0';
-    }
-    static bool autofocus = true;
-    if (autofocus) {
+      showCompletionPopup = false; // Hide popup when command is executed
       ImGui::SetKeyboardFocusHere(-1);
-      autofocus = false;
+    }
+    if (inputFocusRequest) {
+      ImGui::SetKeyboardFocusHere(-1);
+      inputFocusRequest = false;
     }
   }
   ImGui::End();
@@ -116,9 +241,4 @@ void Interface::update(Scene &scene) {
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-void Interface::destroy() {
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
 }
