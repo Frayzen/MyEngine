@@ -5,26 +5,14 @@ set(OpenGL_GL_PREFERENCE GLVND)
 
 # DEPS
 
+include(cmake/Deps.cmake)
+
+SetupDeps()
+
 find_package(OpenGL REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(assimp REQUIRED)
-find_package(glm REQUIRED)
-
-# IMGUI TARGET
-
-file(GLOB imgui_sources imgui/*.cpp)
-set(imgui_backend_sources imgui/backends/imgui_impl_opengl3.cpp imgui/backends/imgui_impl_glfw.cpp)
-
-add_library(imgui STATIC ${imgui_sources} ${imgui_backend_sources})
-target_include_directories(imgui PUBLIC ./imgui)
-target_include_directories(imgui PUBLIC ./imgui/backends/)
-
-# Override compiler flags for imgui target
-target_compile_options(imgui PRIVATE
-    $<$<CONFIG:Debug>: -O2>  # Force optimization level 2 even in Debug
-    $<$<CONFIG:Debug>: -DNDEBUG>  # Define NDEBUG in Debug
-    $<$<NOT:$<CONFIG:Debug>>: -O2>  # Use O2 for other build types
-)
+# find_package(assimp REQUIRED)
+# find_package(glfw3 REQUIRED)
+# find_package(glm REQUIRED)
 
 # ENGINE TARGET
 
