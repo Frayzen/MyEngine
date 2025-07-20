@@ -1,0 +1,12 @@
+name: muscat
+channels:
+  - conda-forge
+dependencies:
+  - glm
+  - assimp
+  - mesalib
+  - cmake
+  - glfw
+  - glad
+  - cxx-compiler
+  - imgui

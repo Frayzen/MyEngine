@@ -73,7 +73,7 @@ static GLuint load(const aiMaterial *mat, aiTextureType type,
     glGenTextures(1, &buffer);
     glBindTexture(GL_TEXTURE_2D, buffer);
 
-    aiTextureMapMode mode;
+    aiTextureMapMode mode = aiTextureMapMode_Wrap;
     mat->Get(AI_MATKEY_MAPPINGMODE_U(type, 0), mode);
     applyMappingMode(mode, GL_TEXTURE_WRAP_S);
     mat->Get(AI_MATKEY_MAPPINGMODE_V(type, 0), mode);
