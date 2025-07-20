@@ -10,3 +10,4 @@ dependencies:
   - glad
   - cxx-compiler
   - imgui
+  - lua

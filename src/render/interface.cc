@@ -6,6 +6,47 @@
 #include <iostream>
 #include "render/scene.hh"
 
+extern "C" {
+#include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
+}
+
+// Lua state and REPL history
+lua_State *L = nullptr;
+std::vector<std::string> replHistory;
+bool scrollToBottom = false;
+
+// Initialize Lua
+static void InitLua() {
+  L = luaL_newstate();
+  luaL_openlibs(L); // Load standard Lua libraries
+
+  // Expose a C++ function to Lua (example)
+  lua_pushcfunction(L, [](lua_State *L) -> int {
+    float x = lua_tonumber(L, 1); // arg1
+    float y = lua_tonumber(L, 2); // arg2
+    std::cout << "Moving to: " << x << ", " << y << std::endl;
+    return 0;
+  });
+  lua_setglobal(L, "move"); // Now "move 10 20" works
+
+  lua_setglobal(L, "cpp_func"); // Now Lua can call `cpp_func(x, y)`
+}
+
+// Execute a Lua command and update history
+static void ExecuteLuaCommand(const std::string &cmd) {
+  // Use pcall to catch errors
+  std::string luaCode = "local success, err = pcall(function() " + cmd +
+                        " end); "
+                        "if not success then return err end";
+
+  if (luaL_dostring(L, luaCode.c_str())) {
+    replHistory.push_back("Error: " + std::string(lua_tostring(L, -1)));
+    lua_pop(L, 1);
+  }
+  scrollToBottom = true;
+}
 static bool inputFocusRequest = true;
 
 static void drawHierarchy(Scene &scene) {
@@ -57,6 +98,7 @@ Interface::Interface(GLFWwindow *window) {
       window, true); // Second param install_callback=true will install
                      // GLFW callbacks and chain to existing ones.
   ImGui_ImplOpenGL3_Init();
+  InitLua();
 }
 
 // Add these global variables near your InputCallback
@@ -216,7 +258,7 @@ void Interface::update(Scene &scene) {
         ImGuiInputTextFlags_EnterReturnsTrue |
             ImGuiInputTextFlags_CallbackEdit |
             ImGuiInputTextFlags_CallbackHistory |
-            ImGuiInputTextFlags_CallbackCompletion |
+            // ImGuiInputTextFlags_CallbackCompletion |
             ImGuiInputTextFlags_NoHorizontalScroll,
         InputCallback);
 
@@ -226,10 +268,15 @@ void Interface::update(Scene &scene) {
     ImGui::PopStyleColor(2);
 
     if (enterPressed && inputBuffer[0] != '\0') {
-      std::cout << "Command entered: " << inputBuffer << std::endl;
-      inputBuffer[0] = '\0';
+      std::cout << ">" << inputBuffer << std::endl;
       showCompletionPopup = false; // Hide popup when command is executed
       ImGui::SetKeyboardFocusHere(-1);
+      ExecuteLuaCommand(inputBuffer);
+      while (!replHistory.empty()) {
+        std::cout << replHistory.back() << std::endl;
+        replHistory.pop_back();
+      }
+      inputBuffer[0] = '\0';
     }
     if (inputFocusRequest) {
       ImGui::SetKeyboardFocusHere(-1);
