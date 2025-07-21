@@ -54,10 +54,13 @@ Shader::Shader(const std::string vertexShaderPath,
   GL_ERR;
 }
 
-void Shader::activate(const Camera &camera) {
+void Shader::use() {
   FAIL_ON(!shaderProgram, "Cannot link program");
   glUseProgram(shaderProgram);
+}
 
+void Shader::activate(const Camera &camera) {
+  use();
   glm::mat4 view = camera.transform.getViewMat();
   glm::mat4 proj = camera.getPerspectiveMat();
   glUniformMatrix4fv(loc("view"), 1, GL_FALSE, &view[0][0]);

@@ -21,6 +21,32 @@ static void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
+void Window::setupFrameBuffer(int width, int height) {
+  glGenFramebuffers(1, &framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  // generate texture
+  glGenTextures(1, &textureColorbuffer);
+  glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  // render buffer
+  glGenRenderbuffers(1, &rbo);
+  glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                            GL_RENDERBUFFER, rbo);
+  // attach it to currently bound framebuffer object
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         textureColorbuffer, 0);
+  FAIL_ON(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE,
+          "Failed to create framebuffer");
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 Window::Window(int width, int height, const char *title) {
   glfwSetErrorCallback(glfw_error_callback);
 
@@ -32,6 +58,8 @@ Window::Window(int width, int height, const char *title) {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
   glfwWindowHint(GLFW_DEPTH_BITS, 24); // Request depth buffer
+
+  glfwWindowHint(GLFW_SAMPLES, 4);
 
   window = glfwCreateWindow(width, height, title, nullptr, nullptr);
   FAIL_ON(!window, "Could not create glfw window.");
@@ -72,10 +100,15 @@ Window::Window(int width, int height, const char *title) {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glEnable(GL_BLEND);
+  glEnable(GL_MULTISAMPLE);
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   interface = std::make_shared<Interface>(window);
+
+  setupFrameBuffer(width, height);
+  screenShader = std::make_shared<Shader>(
+      "./assets/shaders/screen.vert", "./assets/shaders/screen.frag", false);
 }
 
 void Window::run(Scene &scene) {
@@ -84,12 +117,62 @@ void Window::run(Scene &scene) {
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     glDepthMask(GL_TRUE);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // first pass
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
     scene.update();
     scene.render();
 
+    // second pass
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    screenShader->use();
+
+    static GLuint quadVAO = 0;
+    if (!quadVAO) {
+      // Generate VAO
+      glGenVertexArrays(1, &quadVAO);
+      glBindVertexArray(quadVAO);
+
+      unsigned int VBO;
+      // Generate VBO
+      glGenBuffers(1, &VBO);
+      glBindBuffer(GL_ARRAY_BUFFER, VBO);
+      const float vertices[] = {
+          // positions   // texCoords
+          -1.0f, 1.0f, 0.0f,  1.0f,  1.0f, -1.0f,
+          1.0f,  0.0f, -1.0f, -1.0f, 0.0f, 0.0f,
+
+          -1.0f, 1.0f, 0.0f,  1.0f,  1.0f, 1.0f,
+          1.0f,  1.0f, 1.0f,  -1.0f, 1.0f, 0.0f,
+      };
+      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+      // Position attribute
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                            (void *)0);
+
+      // Texture coordinate attribute
+      glEnableVertexAttribArray(1);
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                            (void *)(2 * sizeof(float)));
+
+      glBindVertexArray(0); // Unbind VAO
+    }
+
+    glBindVertexArray(quadVAO);
+    glDisable(GL_DEPTH_TEST);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    glUniform1i(screenShader->loc("screenTexture"), 0);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     interface->update(scene);
 
     double currentTime = glfwGetTime();
@@ -109,6 +192,8 @@ void Window::run(Scene &scene) {
 }
 
 Window::~Window() {
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glDeleteFramebuffers(1, &framebuffer);
   interface->destroy();
   if (glfwGetCurrentContext() != nullptr)
     glfwDestroyWindow(glfwGetCurrentContext());

@@ -4,49 +4,50 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <iostream>
+#include <tcl.h>
 #include "render/scene.hh"
 
-extern "C" {
-#include <lauxlib.h>
-#include <lua.h>
-#include <lualib.h>
+Tcl_Interp *interp = Tcl_CreateInterp();
+static void InitTcl() {
+
+  Tcl_Init(interp);
+
+  // Register a C++ function
+  Tcl_CreateObjCommand(
+      interp, "mycommand",
+      [](ClientData clientData, Tcl_Interp *interp, int objc,
+         Tcl_Obj *const objv[]) -> int {
+        (void)objv;
+        (void)interp;
+        (void)clientData;
+        (void)objc;
+        std::cout << "OK" << std::endl;
+        return TCL_OK;
+      },
+      nullptr, nullptr);
 }
 
-// Lua state and REPL history
-lua_State *L = nullptr;
-std::vector<std::string> replHistory;
-bool scrollToBottom = false;
+// Get all registered Tcl commands for autocomplete
+std::vector<std::string> GetTclCompletions(const std::string &partial) {
+  std::vector<std::string> matches;
+  Tcl_Obj *cmdObj = Tcl_NewStringObj("info", -1);
+  Tcl_ListObjAppendElement(interp, cmdObj, Tcl_NewStringObj("commands", -1));
+  Tcl_ListObjAppendElement(interp, cmdObj,
+                           Tcl_NewStringObj(partial.c_str(), -1));
 
-// Initialize Lua
-static void InitLua() {
-  L = luaL_newstate();
-  luaL_openlibs(L); // Load standard Lua libraries
+  if (Tcl_EvalObj(interp, cmdObj) == TCL_OK) {
+    int listSize;
+    Tcl_Obj **listItems;
+    Tcl_ListObjGetElements(interp, Tcl_GetObjResult(interp), &listSize,
+                           &listItems);
 
-  // Expose a C++ function to Lua (example)
-  lua_pushcfunction(L, [](lua_State *L) -> int {
-    float x = lua_tonumber(L, 1); // arg1
-    float y = lua_tonumber(L, 2); // arg2
-    std::cout << "Moving to: " << x << ", " << y << std::endl;
-    return 0;
-  });
-  lua_setglobal(L, "move"); // Now "move 10 20" works
-
-  lua_setglobal(L, "cpp_func"); // Now Lua can call `cpp_func(x, y)`
-}
-
-// Execute a Lua command and update history
-static void ExecuteLuaCommand(const std::string &cmd) {
-  // Use pcall to catch errors
-  std::string luaCode = "local success, err = pcall(function() " + cmd +
-                        " end); "
-                        "if not success then return err end";
-
-  if (luaL_dostring(L, luaCode.c_str())) {
-    replHistory.push_back("Error: " + std::string(lua_tostring(L, -1)));
-    lua_pop(L, 1);
+    for (int i = 0; i < listSize; i++) {
+      matches.push_back(Tcl_GetString(listItems[i]));
+    }
   }
-  scrollToBottom = true;
+  return matches;
 }
+
 static bool inputFocusRequest = true;
 
 static void drawHierarchy(Scene &scene) {
@@ -98,16 +99,15 @@ Interface::Interface(GLFWwindow *window) {
       window, true); // Second param install_callback=true will install
                      // GLFW callbacks and chain to existing ones.
   ImGui_ImplOpenGL3_Init();
-  InitLua();
+  InitTcl();
 }
 
 // Add these global variables near your InputCallback
-static std::vector<std::string> completionCandidates = {
-    "hello", "world", "imgui",  "imgui2", "imgui3",
-    "demo",  "scene", "object", "render"};
 static size_t currentCandidate = 0;
 static bool showCompletionPopup = true;
 static std::string currentInputPrefix;
+
+static std::vector<std::string> filteredCandidates;
 
 int InputCallback(ImGuiInputTextCallbackData *data) {
   // Get current word prefix
@@ -123,7 +123,7 @@ int InputCallback(ImGuiInputTextCallbackData *data) {
   currentInputPrefix = std::string(word_start, word_end);
 
   // Filter candidates based on prefix
-  std::vector<std::string> filteredCandidates;
+  auto completionCandidates = GetTclCompletions(currentInputPrefix);
   for (const auto &candidate : completionCandidates) {
     if (candidate.find(currentInputPrefix) == 0) {
       filteredCandidates.push_back(candidate);
@@ -158,13 +158,6 @@ void DrawCompletionPopup(char *inputBuffer, size_t bufferSize) {
     return;
 
   // Filter candidates based on current input prefix
-  std::vector<std::string> filteredCandidates;
-  for (const auto &candidate : completionCandidates) {
-    if (candidate.find(currentInputPrefix) == 0) {
-      filteredCandidates.push_back(candidate);
-    }
-  }
-
   if (filteredCandidates.empty()) {
     showCompletionPopup = false;
     return;
@@ -262,22 +255,28 @@ void Interface::update(Scene &scene) {
             ImGuiInputTextFlags_NoHorizontalScroll,
         InputCallback);
 
+    if (enterPressed) {
+      inputFocusRequest = true;
+      if (inputBuffer[0] != '\0') {
+        std::cout << ">" << inputBuffer << std::endl;
+        int res = Tcl_Eval(interp, inputBuffer);
+        if (res != TCL_OK) {
+          std::cerr << "Tcl Error:\n"
+                    << "  Message: " << Tcl_GetStringResult(interp) << "\n"
+                    << "  Stack: "
+                    << Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) << "\n";
+        }
+
+        ImGui::SetKeyboardFocusHere(-1);
+        inputBuffer[0] = '\0';
+      }
+    }
+
     // Draw the completion popup if needed
-    DrawCompletionPopup(inputBuffer, IM_ARRAYSIZE(inputBuffer));
+    // DrawCompletionPopup(inputBuffer, IM_ARRAYSIZE(inputBuffer));
 
     ImGui::PopStyleColor(2);
 
-    if (enterPressed && inputBuffer[0] != '\0') {
-      std::cout << ">" << inputBuffer << std::endl;
-      showCompletionPopup = false; // Hide popup when command is executed
-      ImGui::SetKeyboardFocusHere(-1);
-      ExecuteLuaCommand(inputBuffer);
-      while (!replHistory.empty()) {
-        std::cout << replHistory.back() << std::endl;
-        replHistory.pop_back();
-      }
-      inputBuffer[0] = '\0';
-    }
     if (inputFocusRequest) {
       ImGui::SetKeyboardFocusHere(-1);
       inputFocusRequest = false;

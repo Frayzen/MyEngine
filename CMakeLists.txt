@@ -10,7 +10,8 @@ find_package(glfw3 REQUIRED)
 find_package(assimp REQUIRED)
 find_package(glm REQUIRED)
 find_package(glad REQUIRED)
-find_package(Lua REQUIRED)
+find_package(TCL REQUIRED)
+find_package(imgui REQUIRED)
 
 # ENGINE TARGET
 
@@ -26,9 +27,9 @@ target_link_libraries(MyEngine OpenGL::GL)
 target_link_libraries(MyEngine assimp)
 target_link_libraries(MyEngine glm::glm)
 target_link_libraries(MyEngine glfw)
-target_link_libraries(MyEngine imgui)
+target_link_libraries(MyEngine imgui::imgui)
 target_link_libraries(MyEngine glad)
-target_link_libraries(MyEngine lua)
+target_link_libraries(MyEngine ${TCL_LIBRARY})
 
 if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
   ADD_CUSTOM_TARGET(link_target ALL
