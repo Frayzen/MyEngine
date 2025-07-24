@@ -8,23 +8,26 @@
 #include "render/scene.hh"
 
 Tcl_Interp *interp = Tcl_CreateInterp();
+static std::string logs = "";
+
 static void InitTcl() {
 
   Tcl_Init(interp);
 
   // Register a C++ function
   Tcl_CreateObjCommand(
-      interp, "mycommand",
+      interp, "ping",
       [](ClientData clientData, Tcl_Interp *interp, int objc,
          Tcl_Obj *const objv[]) -> int {
         (void)objv;
         (void)interp;
         (void)clientData;
         (void)objc;
-        std::cout << "OK" << std::endl;
+        logs += "pong !\n";
         return TCL_OK;
       },
       nullptr, nullptr);
+  Tcl_SetVar(interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY);
 }
 
 // Get all registered Tcl commands for autocomplete
@@ -219,33 +222,24 @@ void Interface::update(Scene &scene) {
 
   drawHierarchy(scene);
 
-  // Calculate position and size
-  const float input_height = ImGui::GetFrameHeightWithSpacing();
   const ImVec2 display_size = ImGui::GetIO().DisplaySize;
-  const ImVec2 window_pos(0, display_size.y - input_height);
-  const ImVec2 window_size(display_size.x, input_height);
+  ImGui::SetNextWindowPos(ImVec2(0.0f, display_size.y), 0, ImVec2(0.0f, 1.0f));
+  ImGui::SetWindowSize(ImVec2(display_size.x, 0));
 
-  // Set up window
-  ImGui::SetNextWindowPos(window_pos);
-  ImGui::SetNextWindowSize(window_size);
+  ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize |
+                           ImGuiWindowFlags_NoTitleBar |
+                           ImGuiWindowFlags_NoMove;
+  ImGui::SetNextWindowSize(
+      ImVec2(display_size.x,
+             0)); // Width = -1 (fill available space), Height = 0 (auto)
+  if (ImGui::Begin("Commands", nullptr, flags)) {
+    ImGui::Text("LOGS");
+    ImGui::TextColored(ImVec4(0.6, 0.6, 0.6, 1), "%s", logs.c_str());
 
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 3));
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-
-  ImGuiWindowFlags flags =
-      ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-      ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-      ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing;
-
-  if (ImGui::Begin("CommandLineInput", nullptr, flags)) {
+    // Make input fill available width
     static char inputBuffer[256] = "";
 
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 0.7f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
-
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-
     bool enterPressed = ImGui::InputTextWithHint(
         "##Input", "Enter command...", inputBuffer, IM_ARRAYSIZE(inputBuffer),
         ImGuiInputTextFlags_EnterReturnsTrue |
@@ -255,16 +249,19 @@ void Interface::update(Scene &scene) {
             ImGuiInputTextFlags_NoHorizontalScroll,
         InputCallback);
 
+    ImGui::SetNextItemWidth(display_size.x);
     if (enterPressed) {
       inputFocusRequest = true;
       if (inputBuffer[0] != '\0') {
         std::cout << ">" << inputBuffer << std::endl;
         int res = Tcl_Eval(interp, inputBuffer);
         if (res != TCL_OK) {
+          auto log = Tcl_GetStringResult(interp);
           std::cerr << "Tcl Error:\n"
-                    << "  Message: " << Tcl_GetStringResult(interp) << "\n"
+                    << "  Message: " << log << "\n"
                     << "  Stack: "
                     << Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) << "\n";
+          logs = logs + '\n' + log;
         }
 
         ImGui::SetKeyboardFocusHere(-1);
@@ -274,16 +271,12 @@ void Interface::update(Scene &scene) {
 
     // Draw the completion popup if needed
     // DrawCompletionPopup(inputBuffer, IM_ARRAYSIZE(inputBuffer));
-
-    ImGui::PopStyleColor(2);
-
     if (inputFocusRequest) {
       ImGui::SetKeyboardFocusHere(-1);
       inputFocusRequest = false;
     }
   }
   ImGui::End();
-  ImGui::PopStyleVar(3);
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
