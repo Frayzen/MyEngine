@@ -39,11 +39,11 @@ void Object::cacheModelMats(const glm::mat4 &parentMat) {
   }
 }
 
-void Object::apply(const std::function<void(Object &obj)> fn) {
-  fn(*this);
-  for (auto child : children) {
-    child->apply(fn);
-  }
+void Object::apply(const std::function<int(Object &obj)> fn) {
+  if (fn(*this))
+    for (auto child : children) {
+      child->apply(fn);
+    }
 }
 
 const glm::mat4 &Object::getModelMat() const { return modelMat; }

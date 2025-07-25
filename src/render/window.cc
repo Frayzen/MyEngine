@@ -121,8 +121,9 @@ void Window::run(Scene &scene) {
     // first pass
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
     scene.update();
     scene.render();
 
