@@ -9,4 +9,3 @@ dependencies:
   - glfw
   - glad
   - cxx-compiler
-  - imgui

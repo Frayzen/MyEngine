@@ -5,12 +5,15 @@ set(OpenGL_GL_PREFERENCE GLVND)
 
 # DEPS
 
+include(cmake/Deps.cmake)
+
+SetupDeps()
+
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(assimp REQUIRED)
 find_package(glm REQUIRED)
 find_package(glad REQUIRED)
-find_package(imgui REQUIRED)
 
 # ENGINE TARGET
 
@@ -26,7 +29,7 @@ target_link_libraries(MyEngine OpenGL::GL)
 target_link_libraries(MyEngine assimp)
 target_link_libraries(MyEngine glm::glm)
 target_link_libraries(MyEngine glfw)
-target_link_libraries(MyEngine imgui::imgui)
+target_link_libraries(MyEngine imgui)
 target_link_libraries(MyEngine glad)
 
 if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
