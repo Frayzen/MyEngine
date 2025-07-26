@@ -1,53 +1,22 @@
 #include "render/interface.hh"
+#include <algorithm>
 #include <functional>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <iostream>
-#include <tcl.h>
 #include "render/scene.hh"
 
-Tcl_Interp *interp = Tcl_CreateInterp();
 static std::string logs = "";
 
-static void InitTcl() {
-
-  Tcl_Init(interp);
-
-  // Register a C++ function
-  Tcl_CreateObjCommand(
-      interp, "ping",
-      [](ClientData clientData, Tcl_Interp *interp, int objc,
-         Tcl_Obj *const objv[]) -> int {
-        (void)objv;
-        (void)interp;
-        (void)clientData;
-        (void)objc;
-        logs += "pong !\n";
-        return TCL_OK;
-      },
-      nullptr, nullptr);
-  Tcl_SetVar(interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY);
-}
-
 // Get all registered Tcl commands for autocomplete
-std::vector<std::string> GetTclCompletions(const std::string &partial) {
+std::vector<std::string> GetCompletions(const std::string &partial) {
   std::vector<std::string> matches;
-  Tcl_Obj *cmdObj = Tcl_NewStringObj("info", -1);
-  Tcl_ListObjAppendElement(interp, cmdObj, Tcl_NewStringObj("commands", -1));
-  Tcl_ListObjAppendElement(interp, cmdObj,
-                           Tcl_NewStringObj(partial.c_str(), -1));
-
-  if (Tcl_EvalObj(interp, cmdObj) == TCL_OK) {
-    int listSize;
-    Tcl_Obj **listItems;
-    Tcl_ListObjGetElements(interp, Tcl_GetObjResult(interp), &listSize,
-                           &listItems);
-
-    for (int i = 0; i < listSize; i++) {
-      matches.push_back(Tcl_GetString(listItems[i]));
-    }
-  }
+  if (partial.empty())
+    return matches;
+  const std::string tst = "ping";
+  if (tst.starts_with(partial))
+    matches.push_back(tst);
   return matches;
 }
 
@@ -102,15 +71,14 @@ Interface::Interface(GLFWwindow *window) {
       window, true); // Second param install_callback=true will install
                      // GLFW callbacks and chain to existing ones.
   ImGui_ImplOpenGL3_Init();
-  InitTcl();
 }
 
 // Add these global variables near your InputCallback
 static size_t currentCandidate = 0;
-static bool showCompletionPopup = true;
+static bool openAutocomplete = true;
 static std::string currentInputPrefix;
 
-static std::vector<std::string> filteredCandidates;
+static std::vector<std::string> autocompleteCandidates;
 
 int InputCallback(ImGuiInputTextCallbackData *data) {
   // Get current word prefix
@@ -126,24 +94,25 @@ int InputCallback(ImGuiInputTextCallbackData *data) {
   currentInputPrefix = std::string(word_start, word_end);
 
   // Filter candidates based on prefix
-  auto completionCandidates = GetTclCompletions(currentInputPrefix);
+  auto completionCandidates = GetCompletions(currentInputPrefix);
+  autocompleteCandidates.clear();
   for (const auto &candidate : completionCandidates) {
     if (candidate.find(currentInputPrefix) == 0) {
-      filteredCandidates.push_back(candidate);
+      autocompleteCandidates.push_back(candidate);
     }
   }
 
-  if (!filteredCandidates.empty()) {
+  if (!autocompleteCandidates.empty()) {
     // Show popup next frame
-    showCompletionPopup = true;
+    openAutocomplete = true;
     currentCandidate = 0;
 
     // If there's only one match, complete it immediately
-    if (filteredCandidates.size() == 1 &&
+    if (autocompleteCandidates.size() == 1 &&
         data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
       data->DeleteChars((int)(word_start - data->Buf),
                         (int)(word_end - word_start));
-      data->InsertChars(data->CursorPos, filteredCandidates[0].c_str());
+      data->InsertChars(data->CursorPos, autocompleteCandidates[0].c_str());
     }
   }
   inputFocusRequest = true;
@@ -156,79 +125,65 @@ void Interface::destroy() {
   ImGui::DestroyContext();
 }
 
-void DrawCompletionPopup(char *inputBuffer, size_t bufferSize) {
-  if (!showCompletionPopup)
-    return;
-
-  // Filter candidates based on current input prefix
-  if (filteredCandidates.empty()) {
-    showCompletionPopup = false;
-    return;
-  }
-
-  // Position the popup near the text input
-  ImVec2 pos = ImGui::GetItemRectMin();
-  pos.y -= filteredCandidates.size() * ImGui::GetItemRectSize().y;
-
-  ImGui::SetNextWindowPos(pos);
-  ImGui::SetNextWindowSize(ImVec2(ImGui::GetItemRectSize().x, 0));
-
-  ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar |
-                           ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                           ImGuiWindowFlags_HorizontalScrollbar;
-
-  if (ImGui::Begin("##CompletionPopup", &showCompletionPopup, flags)) {
-    for (size_t i = 0; i < filteredCandidates.size(); i++) {
-      bool isSelected = (i == currentCandidate);
-      if (ImGui::Selectable(filteredCandidates[i].c_str(), isSelected)) {
-        // User clicked on an item
-        strncpy(inputBuffer, filteredCandidates[i].c_str(), bufferSize - 1);
-        inputBuffer[bufferSize - 1] = '\0';
-        showCompletionPopup = false;
-      }
-
-      if (isSelected) {
-        ImGui::SetItemDefaultFocus();
-      }
-    }
-  }
-  ImGui::End();
-
-  // Handle keyboard navigation in the popup
-  if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) && currentCandidate > 0) {
-    currentCandidate--;
-  }
-  if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) &&
-      currentCandidate < filteredCandidates.size() - 1) {
-    currentCandidate++;
-  }
-  if (ImGui::IsKeyPressed(ImGuiKey_Enter)) {
-    // Apply the current selection
-    strncpy(inputBuffer, filteredCandidates[currentCandidate].c_str(),
-            bufferSize - 1);
-    inputBuffer[bufferSize - 1] = '\0';
-    showCompletionPopup = false;
-    ImGui::SetKeyboardFocusHere(-1); // Refocus the input
-  }
-  if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-    showCompletionPopup = false;
-  }
-}
-
 void Interface::update(Scene &scene) {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
+  ImGui::ShowMetricsWindow();
+
+  const ImVec2 display_size = ImGui::GetIO().DisplaySize;
 
   drawHierarchy(scene);
 
-  const ImVec2 display_size = ImGui::GetIO().DisplaySize;
+  if (openAutocomplete) {
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetStyle().WindowBorderSize +
+                                       ImGui::GetStyle().FramePadding.x,
+                                   display_size.y -
+                                       ImGui::GetFrameHeightWithSpacing() -
+                                       ImGui::GetStyle().WindowBorderSize),
+                            0, ImVec2(0.0f, 1.0f));
+    ImGui::SetNextWindowFocus();
+    inputFocusRequest = true;
+    ImGui::OpenPopup("autocomplete");
+    openAutocomplete = false;
+  }
+
+  static int autocompleteSelected = 0;
+  static std::string insertValue;
+
+  if (!autocompleteCandidates.empty() &&
+      ImGui::BeginPopup("autocomplete",
+                        ImGuiWindowFlags_NoMove |
+                            ImGuiWindowFlags_NoFocusOnAppearing)) {
+    if (autocompleteCandidates.size() == 1) {
+      insertValue = autocompleteCandidates[0].c_str();
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+      ++autocompleteSelected;
+    if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+      --autocompleteSelected;
+    if (ImGui::IsKeyPressed(ImGuiKey_Enter))
+      insertValue = autocompleteCandidates[autocompleteSelected].c_str();
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+      ImGui::CloseCurrentPopup();
+    autocompleteSelected = std::clamp(autocompleteSelected, 0,
+                                      (int)autocompleteCandidates.size() - 1);
+    for (int i = 0, c = autocompleteCandidates.size(); i < c; ++i) {
+      const char *value = autocompleteCandidates[i].c_str();
+      if (ImGui::Selectable(value, autocompleteSelected == i)) {
+        insertValue = value;
+      }
+    }
+    ImGui::EndPopup();
+  }
+
   ImGui::SetNextWindowPos(ImVec2(0.0f, display_size.y), 0, ImVec2(0.0f, 1.0f));
   ImGui::SetWindowSize(ImVec2(display_size.x, 0));
 
-  ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize |
-                           ImGuiWindowFlags_NoTitleBar |
-                           ImGuiWindowFlags_NoMove;
+  ImGuiWindowFlags flags =
+      ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
+      ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoMove;
   ImGui::SetNextWindowSize(
       ImVec2(display_size.x,
              0)); // Width = -1 (fill available space), Height = 0 (auto)
@@ -250,33 +205,23 @@ void Interface::update(Scene &scene) {
         InputCallback);
 
     ImGui::SetNextItemWidth(display_size.x);
+
+    if (inputFocusRequest) {
+      ImGui::SetKeyboardFocusHere(-1);
+      inputFocusRequest = false;
+    }
     if (enterPressed) {
       inputFocusRequest = true;
       if (inputBuffer[0] != '\0') {
         std::cout << ">" << inputBuffer << std::endl;
-        int res = Tcl_Eval(interp, inputBuffer);
-        if (res != TCL_OK) {
-          auto log = Tcl_GetStringResult(interp);
-          std::cerr << "Tcl Error:\n"
-                    << "  Message: " << log << "\n"
-                    << "  Stack: "
-                    << Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) << "\n";
-          logs = logs + '\n' + log;
-        }
-
+        autocompleteCandidates.clear();
         ImGui::SetKeyboardFocusHere(-1);
         inputBuffer[0] = '\0';
       }
     }
 
-    // Draw the completion popup if needed
-    // DrawCompletionPopup(inputBuffer, IM_ARRAYSIZE(inputBuffer));
-    if (inputFocusRequest) {
-      ImGui::SetKeyboardFocusHere(-1);
-      inputFocusRequest = false;
-    }
+    ImGui::End();
   }
-  ImGui::End();
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

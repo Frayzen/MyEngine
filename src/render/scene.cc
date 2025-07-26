@@ -69,7 +69,6 @@ void Scene::render() {
     curShader = &highlightShader;
     highlightShader.activate(camera);
     highlightedObject->apply(renderLambda);
-
     glDisable(GL_STENCIL_TEST);
   }
 
