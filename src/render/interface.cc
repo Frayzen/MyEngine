@@ -71,6 +71,8 @@ Interface::Interface(GLFWwindow *window) {
       window, true); // Second param install_callback=true will install
                      // GLFW callbacks and chain to existing ones.
   ImGui_ImplOpenGL3_Init();
+
+  ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 }
 
 // Add these global variables near your InputCallback
@@ -130,7 +132,6 @@ void Interface::update(Scene &scene) {
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
   ImGui::ShowMetricsWindow();
-  ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
   const ImVec2 display_size = ImGui::GetIO().DisplaySize;
 

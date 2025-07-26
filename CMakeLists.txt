@@ -5,8 +5,7 @@ set(OpenGL_GL_PREFERENCE GLVND)
 
 # DEPS
 
-include(cmake/Deps.cmake)
-
+include(cmake/deps.cmake)
 SetupDeps()
 
 find_package(OpenGL REQUIRED)

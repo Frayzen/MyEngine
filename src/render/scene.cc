@@ -66,10 +66,13 @@ void Scene::render() {
     glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     glStencilMask(0x00); // disable writing to the stencil buffer
     glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
     curShader = &highlightShader;
     highlightShader.activate(camera);
     highlightedObject->apply(renderLambda);
     glDisable(GL_STENCIL_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
   }
 
   glBindVertexArray(0);
