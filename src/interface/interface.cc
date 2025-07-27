@@ -7,6 +7,7 @@
 #include <memory>
 #include "commands/command_manager.hh"
 #include "commands/select.hh"
+#include "interface/console.hh"
 #include "render/scene.hh"
 
 static std::string logs = "";
@@ -77,9 +78,13 @@ void Interface::update(Scene &scene) {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
+  ImGui::DockSpaceOverViewport(0, NULL, ImGuiDockNodeFlags_PassthruCentralNode);
+
   ImGui::ShowMetricsWindow();
 
+  ImGui::ShowDemoWindow();
   drawHierarchy(scene);
+  ShowConsole();
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
