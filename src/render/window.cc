@@ -1,4 +1,5 @@
 #include "glad/glad.h"
+#include "imgui.h"
 #include "render/window.hh"
 
 #include <GL/glext.h>
@@ -47,7 +48,8 @@ void Window::setupFrameBuffer(int width, int height) {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-Window::Window(int width, int height, const char *title) {
+Window::Window(int width, int height, const char *title)
+    : width(width), height(height) {
   glfwSetErrorCallback(glfw_error_callback);
 
   glfwInit();
@@ -132,6 +134,7 @@ void Window::run(Scene &scene) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    /*
     screenShader->use();
 
     static GLuint quadVAO = 0;
@@ -174,7 +177,9 @@ void Window::run(Scene &scene) {
     glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
     glUniform1i(screenShader->loc("screenTexture"), 0);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    interface->update(scene);
+    */
+
+    interface->update(scene, textureColorbuffer);
 
     double currentTime = glfwGetTime();
     // glm::mat4 rotationMatrix =

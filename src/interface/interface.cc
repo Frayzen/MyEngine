@@ -18,7 +18,8 @@ static void drawHierarchy(Scene &scene) {
       [&](std::shared_ptr<Object> &obj) {
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_SpanAvailWidth |
-                                   ImGuiTreeNodeFlags_DrawLinesFull;
+                                   ImGuiTreeNodeFlags_DrawLinesToNodes |
+                                   ImGuiTreeNodeFlags_DefaultOpen;
         if (obj.get() == scene.highlightedObject)
           flags |= ImGuiTreeNodeFlags_Selected;
         bool isLeaf = obj->children.empty();
@@ -27,7 +28,7 @@ static void drawHierarchy(Scene &scene) {
               ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
         bool is_open = ImGui::TreeNodeEx(obj->name.c_str(), flags);
-        if (ImGui::IsItemClicked())
+        if (ImGui::IsItemClicked() || ImGui::IsItemActivated())
           scene.highlightedObject = obj.get();
 
         // Optional: Add folder/file icons (need an icon font)
@@ -75,11 +76,20 @@ void Interface::destroy() {
   ImGui::DestroyContext();
 }
 
-void Interface::update(Scene &scene) {
+void Interface::update(Scene &scene, GLuint renderedTexture) {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
   ImGui::DockSpaceOverViewport(0, NULL, ImGuiDockNodeFlags_PassthruCentralNode);
+
+  ImGui::Begin("GameWindow", NULL,
+               ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration |
+                   ImGuiWindowFlags_NoBringToFrontOnFocus);
+  ImGui::BeginChild("GameRender");
+  ImVec2 wsize = ImGui::GetWindowSize();
+  ImGui::Image(renderedTexture, wsize, ImVec2(0, 1), ImVec2(1, 0));
+  ImGui::EndChild();
+  ImGui::End();
 
   ImGui::ShowMetricsWindow();
 

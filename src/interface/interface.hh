@@ -9,6 +9,6 @@ private:
 
 public:
   Interface(Scene &scene, GLFWwindow *window);
-  void update(Scene &scene);
+  void update(Scene &scene, GLuint textureColorbuffer);
   void destroy();
 };

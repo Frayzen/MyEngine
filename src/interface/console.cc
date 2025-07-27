@@ -1,4 +1,5 @@
 #include "console.hh"
+#include "imgui.h"
 
 // Portable helpers
 static int Stricmp(const char *s1, const char *s2) {
@@ -205,26 +206,26 @@ void Console::Draw(const char *title) {
     strcpy(s, "");
     reclaim_focus = true;
   }
-
-  ImGui::SetNextWindowPos(
-      ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y),
-      ImGuiCond_Always, ImVec2(0, 1));
-
-  ImGui::SetNextWindowBgAlpha(1);
-  if (ImGui::BeginChild("##Suggestions", ImVec2(0, 0),
-                        ImGuiChildFlags_AutoResizeX |
-                            ImGuiChildFlags_AlwaysUseWindowPadding)) {
-    ImGui::Selectable("Test", true);
-    ImGui::Selectable("This is pretty long", false);
-    ImGui::Selectable("Here", false);
-    ImGui::Selectable("We are", false);
-    ImGui::EndChild();
-  }
   // Auto-focus on window apparition
   ImGui::SetItemDefaultFocus();
   if (reclaim_focus)
     ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
+  if (ImGui::IsItemActive()) {
 
+    ImGui::SetNextWindowPos(
+        ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y),
+        ImGuiCond_Always, ImVec2(0, 1));
+    ImGui::SetNextWindowBgAlpha(1);
+    if (ImGui::BeginChild("##Suggestions", ImVec2(0, 0),
+                          ImGuiChildFlags_AutoResizeX |
+                              ImGuiChildFlags_AlwaysUseWindowPadding)) {
+      ImGui::Selectable("Test", true);
+      ImGui::Selectable("This is pretty long", false);
+      ImGui::Selectable("Here", false);
+      ImGui::Selectable("We are", false);
+      ImGui::EndChild();
+    }
+  }
   ImGui::End();
 }
 

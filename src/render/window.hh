@@ -13,6 +13,8 @@ public:
   ~Window();
 
 private:
+  int width;
+  int height;
   void setupFrameBuffer(int width, int height);
   GLFWwindow *window;
   std::shared_ptr<Interface> interface;
