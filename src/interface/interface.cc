@@ -16,8 +16,9 @@ static void drawHierarchy(Scene &scene) {
   // Recursive tree drawing function
   std::function<void(std::shared_ptr<Object> & obj)> DrawNode =
       [&](std::shared_ptr<Object> &obj) {
-        ImGuiTreeNodeFlags flags =
-            ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
+                                   ImGuiTreeNodeFlags_SpanAvailWidth |
+                                   ImGuiTreeNodeFlags_DrawLinesFull;
         if (obj.get() == scene.highlightedObject)
           flags |= ImGuiTreeNodeFlags_Selected;
         bool isLeaf = obj->children.empty();
