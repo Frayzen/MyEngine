@@ -8,8 +8,9 @@
 #include "render/shader.hh"
 
 Scene::Scene(Camera &cam)
-    : camera(cam), highlightShader("./assets/shaders/highlight.vert",
-                                   "./assets/shaders/highlight.frag", false) {
+    : highlightedObject(nullptr), camera(cam),
+      highlightShader("./assets/shaders/highlight.vert",
+                      "./assets/shaders/highlight.frag", false) {
   rootObject = std::make_shared<Object>("root", nullptr, Transform());
   // highlightedObject = rootObject;
 }
@@ -29,7 +30,7 @@ void Scene::render() {
   bool checkHighlight = true;
 
   auto renderLambda = [&curShader, &checkHighlight, this](Object &o) {
-    if (checkHighlight && &o == highlightedObject.get())
+    if (checkHighlight && &o == highlightedObject)
       return false;
     if (o.mesh != nullptr) {
       glUniformMatrix4fv(curShader->loc("model"), 1, GL_FALSE,

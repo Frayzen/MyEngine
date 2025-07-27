@@ -2,7 +2,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "render/interface.hh"
+#include "interface/interface.hh"
 #include "render/scene.hh"
 #include "render/shader.hh"
 
@@ -17,7 +17,8 @@ private:
   GLFWwindow *window;
   std::shared_ptr<Interface> interface;
 
-  std::shared_ptr<Shader> screenShader;
+  // TODO refacto because screenShader should not be here.
+  Shader *screenShader;
 
   unsigned int framebuffer;
   unsigned int textureColorbuffer;

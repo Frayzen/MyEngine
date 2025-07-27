@@ -1,0 +1,86 @@
+#include "interface.hh"
+#include <cstring>
+#include <functional>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <memory>
+#include "commands/command_manager.hh"
+#include "commands/select.hh"
+#include "render/scene.hh"
+
+static std::string logs = "";
+
+static void drawHierarchy(Scene &scene) {
+  // Recursive tree drawing function
+  std::function<void(std::shared_ptr<Object> & obj)> DrawNode =
+      [&](std::shared_ptr<Object> &obj) {
+        ImGuiTreeNodeFlags flags =
+            ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+        if (obj.get() == scene.highlightedObject)
+          flags |= ImGuiTreeNodeFlags_Selected;
+        bool isLeaf = obj->children.empty();
+        if (isLeaf)
+          flags |=
+              ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+        bool is_open = ImGui::TreeNodeEx(obj->name.c_str(), flags);
+        if (ImGui::IsItemClicked())
+          scene.highlightedObject = obj.get();
+
+        // Optional: Add folder/file icons (need an icon font)
+        // ImGui::SameLine();
+        // ImGui::Text(node.is_folder ? ICON_FA_FOLDER : ICON_FA_FILE);
+
+        if (is_open && !isLeaf) {
+          for (auto &child : obj->children) {
+            DrawNode(child);
+          }
+          ImGui::TreePop();
+        }
+      };
+
+  ImGui::Begin("Hierarchy Browser");
+  DrawNode(scene.rootObject);
+  ImGui::End();
+}
+
+Interface::Interface(Scene &scene, GLFWwindow *window) : manager(scene) {
+  // Setup Dear ImGui context
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+
+  // Setup Platform/Renderer backends
+  ImGui_ImplGlfw_InitForOpenGL(
+      window, true); // Second param install_callback=true will install
+                     // GLFW callbacks and chain to existing ones.
+  ImGui_ImplOpenGL3_Init();
+
+  ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+  manager.registerCommand<Select>();
+  manager.registerCommand<Select>();
+}
+
+void Interface::destroy() {
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+}
+
+void Interface::update(Scene &scene) {
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+  ImGui::ShowMetricsWindow();
+
+  drawHierarchy(scene);
+
+  ImGui::Render();
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}

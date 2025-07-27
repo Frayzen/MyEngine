@@ -6,6 +6,7 @@ class Camera;
 
 class Shader {
 public:
+  Shader(const Shader &s) = delete;
   Shader();
   Shader(const std::string vertexShaderPath,
          const std::string fragmentShaderPath, bool usesMaterial);

@@ -5,7 +5,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
-#include "render/interface.hh"
+#include "interface/interface.hh"
 #include "render/scene.hh"
 #include "render/utils.hh"
 
@@ -104,14 +104,14 @@ Window::Window(int width, int height, const char *title) {
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  interface = std::make_shared<Interface>(window);
-
   setupFrameBuffer(width, height);
-  screenShader = std::make_shared<Shader>(
-      "./assets/shaders/screen.vert", "./assets/shaders/screen.frag", false);
+  screenShader = new Shader("./assets/shaders/screen.vert",
+                            "./assets/shaders/screen.frag", false);
 }
 
 void Window::run(Scene &scene) {
+
+  interface = std::make_shared<Interface>(scene, window);
   double previousTime = glfwGetTime();
 
   while (!glfwWindowShouldClose(window)) {
@@ -193,6 +193,7 @@ void Window::run(Scene &scene) {
 }
 
 Window::~Window() {
+  delete screenShader;
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glDeleteFramebuffers(1, &framebuffer);
   interface->destroy();

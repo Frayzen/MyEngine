@@ -6,13 +6,14 @@
 #include "render/shader.hh"
 class Scene {
 public:
+  Scene(const Scene &s) = delete;
   Scene(Camera &cam);
 
   void render();
   void update();
   void instantiate(std::shared_ptr<Model> model);
   std::shared_ptr<Object> rootObject;
-  std::shared_ptr<Object> highlightedObject;
+  Object *highlightedObject;
 
 private:
   Camera &camera;

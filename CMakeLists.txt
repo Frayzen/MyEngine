@@ -22,7 +22,7 @@ file(GLOB_RECURSE c_sources src/*.c)
 add_executable(MyEngine ${sources} ${cpp_sources})
 target_compile_options(MyEngine PUBLIC -Wall -Wextra -Werror -pedantic -std=c++20)
 
-target_include_directories(MyEngine PUBLIC ./include)
+target_include_directories(MyEngine PRIVATE ./src)
 
 target_link_libraries(MyEngine OpenGL::GL)
 target_link_libraries(MyEngine assimp)
