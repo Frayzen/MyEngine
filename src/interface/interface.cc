@@ -54,7 +54,7 @@ static void drawHierarchy(Scene &scene) {
 }
 
 Interface::Interface(Scene &scene, GLFWwindow *window, int width, int height)
-    : manager(scene), renderSize(width, height) {
+    : manager(scene), console(manager), renderSize(width, height) {
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -72,7 +72,6 @@ Interface::Interface(Scene &scene, GLFWwindow *window, int width, int height)
 
   ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  manager.registerCommand<Select>();
   manager.registerCommand<Select>();
 }
 
@@ -103,7 +102,8 @@ void Interface::update(Scene &scene, GLuint renderedTexture) {
 
   ImGui::ShowDemoWindow();
   drawHierarchy(scene);
-  ShowConsole();
+
+  console.Draw("Console");
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

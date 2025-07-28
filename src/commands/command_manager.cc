@@ -47,6 +47,7 @@ CommandManager::getCompletions(const std::string &partial) {
       if (cmd->name.starts_with(args[0]))
         matches.push_back(cmd->name);
     }
+    matches.push_back("selact");
   } else {
     matches.push_back("args");
   }

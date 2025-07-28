@@ -2,10 +2,12 @@
 
 #include <GLFW/glfw3.h>
 #include "commands/command_manager.hh"
+#include "interface/console.hh"
 #include "render/scene.hh"
 class Interface {
 private:
   CommandManager manager;
+  Console console;
 
 public:
   glm::vec2 renderSize;

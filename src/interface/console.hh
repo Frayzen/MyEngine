@@ -2,25 +2,32 @@
 
 #include <cctype>
 #include <cstdio>
+#include "commands/command_manager.hh"
 #include "imgui.h"
-struct Console {
-  char InputBuf[256];
-  ImVector<char *> Items;
-  ImVector<const char *> Commands;
-  ImVector<char *> History;
-  int HistoryPos; // -1: new line, 0..History.Size-1 browsing history.
-  ImGuiTextFilter Filter;
-  bool AutoScroll;
-  bool ScrollToBottom;
+class Console {
+private:
+  std::string inputBuf;
+
+  bool shouldComplete;
+  size_t selectedCompletion;
+  std::vector<std::string> completions;
+
+  std::vector<std::string> logs;
+  std::vector<std::string> history;
+  int historyPos; // -1: new line, 0..History.Size-1 browsing history.
+  ImGuiTextFilter filter;
+  bool autoScroll;
+  bool scrollToBottom;
+  CommandManager &cmdManager;
 
 public:
-  Console();
+  Console(CommandManager &manager);
   ~Console();
 
   void ClearLog();
   void AddLog(const char *fmt, ...) IM_FMTARGS(2);
   void Draw(const char *title);
-  void ExecCommand(const char *command_line);
+  void ExecCommand();
   int TextEditCallback(ImGuiInputTextCallbackData *data);
 };
 void ShowConsole();
