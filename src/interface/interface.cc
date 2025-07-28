@@ -10,33 +10,38 @@
 #include "interface/console.hh"
 #include "render/scene.hh"
 
-static std::string logs = "";
-
 static void drawHierarchy(Scene &scene) {
   // Recursive tree drawing function
-  std::function<void(std::shared_ptr<Object> & obj)> DrawNode =
-      [&](std::shared_ptr<Object> &obj) {
+  std::function<void(const std::shared_ptr<Object> &obj)> DrawNode =
+      [&](const std::shared_ptr<Object> &obj) {
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
                                    ImGuiTreeNodeFlags_SpanAvailWidth |
                                    ImGuiTreeNodeFlags_DrawLinesToNodes |
                                    ImGuiTreeNodeFlags_DefaultOpen;
         if (obj.get() == scene.highlightedObject)
           flags |= ImGuiTreeNodeFlags_Selected;
-        bool isLeaf = obj->children.empty();
+        bool isLeaf = obj->getChildren().empty();
         if (isLeaf)
           flags |=
               ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
         bool is_open = ImGui::TreeNodeEx(obj->name.c_str(), flags);
+
+        if (ImGui::BeginItemTooltip()) {
+          auto b = obj->getBounds();
+          ImGui::SeparatorText("Bounds");
+          ImGui::InputFloat3("Min", &b.min.x, "%.3f",
+                             ImGuiInputTextFlags_ReadOnly);
+          ImGui::InputFloat3("Max", &b.max.x, "%.3f",
+                             ImGuiInputTextFlags_ReadOnly);
+          ImGui::EndTooltip();
+        }
+
         if (ImGui::IsItemClicked() || ImGui::IsItemActivated())
           scene.highlightedObject = obj.get();
 
-        // Optional: Add folder/file icons (need an icon font)
-        // ImGui::SameLine();
-        // ImGui::Text(node.is_folder ? ICON_FA_FOLDER : ICON_FA_FILE);
-
         if (is_open && !isLeaf) {
-          for (auto &child : obj->children) {
+          for (auto &child : obj->getChildren()) {
             DrawNode(child);
           }
           ImGui::TreePop();

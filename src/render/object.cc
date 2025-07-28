@@ -13,22 +13,30 @@ static std::shared_ptr<Object> createFromModel(std::shared_ptr<Model> model) {
   std::shared_ptr<Object> cur = std::make_shared<Object>(
       model->getName(), nullptr, model->getTransform());
   for (auto mesh : model->getMeshes()) {
-    cur->children.push_back(
+    cur->addChild(
         std::make_shared<Object>(mesh->getName(), mesh, model->getTransform()));
   }
   for (auto submodel : model->getSubmodels()) {
-    cur->children.push_back(createFromModel(submodel));
+    cur->addChild(createFromModel(submodel));
   }
   return cur;
 }
 
+void Object::addChild(std::shared_ptr<Object> obj) {
+  children.push_back(obj);
+  bounds.expand(obj->getBounds());
+}
+
 Object::Object(const std::string name, std::shared_ptr<Mesh> mesh,
                const Transform transform)
-    : name(name), transform(transform), mesh(mesh) {}
+    : rendered(true), name(name), transform(transform), mesh(mesh), bounds() {
+  if (mesh)
+    bounds = mesh->getBounds();
+}
 
 std::shared_ptr<Object> Object::instantiate(std::shared_ptr<Model> model) {
   auto created = createFromModel(model);
-  children.push_back(created);
+  addChild(created);
   return created;
 }
 
@@ -47,3 +55,9 @@ void Object::apply(const std::function<int(Object &obj)> fn) {
 }
 
 const glm::mat4 &Object::getModelMat() const { return modelMat; }
+
+const Bounds &Object::getBounds() const { return bounds; }
+
+const std::vector<std::shared_ptr<Object>> &Object::getChildren() const {
+  return children;
+}

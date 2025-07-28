@@ -88,14 +88,18 @@ void Model::addChild(Model &model) {
   submodels.push_back(std::shared_ptr<Model>(&model));
 }
 
-void Model::addMesh(std::shared_ptr<Mesh> m) { meshes.push_back(m); }
+void Model::addMesh(std::shared_ptr<Mesh> m) {
+  meshes.push_back(m);
+  bounds.expand(m->getBounds());
+}
 void Model::addSubmodel(std::shared_ptr<Model> model) {
   submodels.push_back(model);
+  bounds.expand(model->getBounds());
 }
 
 Model::Model(std::string name, std::shared_ptr<Model> parent,
              Transform &transform)
-    : name(name), parent(parent), transform(transform) {};
+    : bounds(), name(name), parent(parent), transform(transform) {};
 
 const std::vector<std::shared_ptr<Mesh>> Model::getMeshes() { return meshes; }
 const std::vector<std::shared_ptr<Model>> Model::getSubmodels() {
@@ -104,3 +108,4 @@ const std::vector<std::shared_ptr<Model>> Model::getSubmodels() {
 Transform &Model::getTransform() { return transform; }
 
 const std::string &Model::getName() { return name; }
+const Bounds &Model::getBounds() const { return bounds; }

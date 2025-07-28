@@ -4,7 +4,7 @@
 #include "render/mesh.hh"
 #include "render/transform.hh"
 
-// A Model is a hierarchy of meshes ready to be instantiated as objects
+// A Model is a hierarchy of meshes ready to be instantiated as Objects
 class Model {
 public:
   Model(const std::string name, std::shared_ptr<Model> parent,
@@ -19,8 +19,10 @@ public:
   const std::vector<std::shared_ptr<Model>> getSubmodels();
   Transform &getTransform();
   const std::string &getName();
+  const Bounds &getBounds() const;
 
 private:
+  Bounds bounds;
   std::string name;
   std::shared_ptr<Model> parent;
   Transform transform;

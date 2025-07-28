@@ -1,15 +1,18 @@
 #include "render/mesh.hh"
 
 #include <glad/glad.h>
+#include <cmath>
 #include <cstddef>
 
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <glm/common.hpp>
 #include <glm/ext/vector_uint3.hpp>
 #include <iostream>
 #include <vector>
+#include "render/bounds.hh"
 #include "render/utils.hh"
 #include "render/vertex.hh"
 
@@ -19,11 +22,15 @@ Mesh::Mesh(const aiMesh *mesh) : Mesh() {
   std::vector<glm::uvec3> tris;
   Vertex cur;
 
+  Bounds bounds;
+
   // Retrieve vertices
   for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
     // V
     auto v = mesh->mVertices[i];
     cur.v = {v.x, v.y, v.z};
+
+    bounds.expand(cur.v);
 
     // VN
     if (!mesh->mNormals) {
@@ -54,11 +61,12 @@ Mesh::Mesh(const aiMesh *mesh) : Mesh() {
     }
   }
 
-  setVertices(vertices, tris);
+  setVertices(vertices, tris, bounds);
 }
 
 void Mesh::setVertices(std::vector<Vertex> vertices,
-                       std::vector<glm::uvec3> tris) {
+                       std::vector<glm::uvec3> tris, const Bounds &bounds) {
+  this->bounds = bounds;
   if (vertices.empty() || tris.empty()) {
     std::cerr << "Error: Empty vertex or index data!" << std::endl;
     VAO = 0;
@@ -138,3 +146,4 @@ unsigned int Mesh::getAmountTris() const { return amountTris; }
 void Mesh::setMaterial(std::shared_ptr<Material> mat) { material = mat; }
 
 const std::string &Mesh::getName() const { return name; }
+const Bounds &Mesh::getBounds() const { return bounds; }

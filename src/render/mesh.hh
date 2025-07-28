@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "render/bounds.hh"
 #include "render/material.hh"
 #include "render/vertex.hh"
 
@@ -12,7 +13,8 @@ class Mesh {
 public:
   Mesh() = default;
   Mesh(const aiMesh *mesh);
-  void setVertices(std::vector<Vertex> vertices, std::vector<glm::uvec3> tris);
+  void setVertices(std::vector<Vertex> vertices, std::vector<glm::uvec3> tris,
+                   const Bounds &bounds);
   bool activate();
   unsigned int getAmountTris() const;
 
@@ -22,9 +24,11 @@ public:
   std::shared_ptr<Material> material;
 
   const std::string &getName() const;
+  const Bounds &getBounds() const;
 
 private:
   std::string name;
   unsigned int VBO, VAO, EBO = 0;
   unsigned int amountTris;
+  Bounds bounds;
 };

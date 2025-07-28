@@ -107,8 +107,6 @@ Window::Window(int width, int height, const char *title)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   setupFrameBuffer(width, height);
-  screenShader = new Shader("./assets/shaders/screen.vert",
-                            "./assets/shaders/screen.frag", false);
 }
 
 void Window::run(Scene &scene) {
@@ -131,61 +129,12 @@ void Window::run(Scene &scene) {
 
     // second pass
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    /*
-    screenShader->use();
-
-    static GLuint quadVAO = 0;
-    if (!quadVAO) {
-      // Generate VAO
-      glGenVertexArrays(1, &quadVAO);
-      glBindVertexArray(quadVAO);
-
-      unsigned int VBO;
-      // Generate VBO
-      glGenBuffers(1, &VBO);
-      glBindBuffer(GL_ARRAY_BUFFER, VBO);
-      const float vertices[] = {
-          // positions   // texCoords
-          -1.0f, 1.0f, 0.0f,  1.0f,  1.0f, -1.0f,
-          1.0f,  0.0f, -1.0f, -1.0f, 0.0f, 0.0f,
-
-          -1.0f, 1.0f, 0.0f,  1.0f,  1.0f, 1.0f,
-          1.0f,  1.0f, 1.0f,  -1.0f, 1.0f, 0.0f,
-      };
-      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-      // Position attribute
-      glEnableVertexAttribArray(0);
-      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-                            (void *)0);
-
-      // Texture coordinate attribute
-      glEnableVertexAttribArray(1);
-      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-                            (void *)(2 * sizeof(float)));
-
-      glBindVertexArray(0); // Unbind VAO
-    }
-
-    glBindVertexArray(quadVAO);
-    glDisable(GL_DEPTH_TEST);
-    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glUniform1i(screenShader->loc("screenTexture"), 0);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    */
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     interface->update(scene, textureColorbuffer);
 
     double currentTime = glfwGetTime();
-    // glm::mat4 rotationMatrix =
-    //     glm::rotate(glm::mat4(1.0f), glm::radians((float)currentTime * 30),
-    //                 glm::vec3(0.0f, 1.0f, 0.0f));
-    // scene.rootObject->transform.rotation = glm::quat_cast(rotationMatrix);
 
     double deltaTime = currentTime - previousTime;
     (void)deltaTime;
@@ -198,7 +147,6 @@ void Window::run(Scene &scene) {
 }
 
 Window::~Window() {
-  delete screenShader;
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glDeleteFramebuffers(1, &framebuffer);
   interface->destroy();
