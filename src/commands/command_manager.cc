@@ -15,6 +15,9 @@ static std::vector<std::string> convertCommandLine(std::string input) {
     args.push_back(arg);
   }
 
+  if (input.ends_with(' '))
+    args.push_back("");
+
   return args;
 }
 

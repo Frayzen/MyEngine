@@ -135,11 +135,12 @@ void Console::Draw(const char *title) {
   ImGui::Separator();
 
   // Command-line
-  bool reclaim_focus = false;
-  ImGuiInputTextFlags input_text_flags = ImGuiInputTextFlags_EnterReturnsTrue |
-                                         ImGuiInputTextFlags_EscapeClearsAll |
-                                         ImGuiInputTextFlags_CallbackAlways |
-                                         ImGuiInputTextFlags_CallbackHistory;
+  bool reclaimFocus = false;
+  ImGuiInputTextFlags input_text_flags =
+      ImGuiInputTextFlags_EnterReturnsTrue |
+      ImGuiInputTextFlags_EscapeClearsAll |
+      ImGuiInputTextFlags_CallbackCompletion |
+      ImGuiInputTextFlags_CallbackAlways | ImGuiInputTextFlags_CallbackHistory;
 
   auto TextEditCallbackStub = [](ImGuiInputTextCallbackData *data) {
     Console *console = (Console *)data->UserData;
@@ -147,15 +148,23 @@ void Console::Draw(const char *title) {
   };
   if (ImGui::InputText("Input", &inputBuf, input_text_flags,
                        TextEditCallbackStub, (void *)this)) {
-    inputBuf = trim(inputBuf);
-    if (!inputBuf.empty())
-      ExecCommand();
-    inputBuf = "";
-    reclaim_focus = true;
+    if (!completions.empty() && !ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+      shouldComplete = true;
+    } else {
+      inputBuf = trim(inputBuf);
+      if (!inputBuf.empty())
+        ExecCommand();
+      inputBuf = "";
+    }
+    reclaimFocus = true;
   }
+
+  if (ImGui::IsItemActivated())
+    shouldComplete = false;
+
   // Auto-focus on window apparition
   ImGui::SetItemDefaultFocus();
-  if (reclaim_focus)
+  if (reclaimFocus)
     ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 
   ImGui::SetNextWindowPos(
@@ -163,22 +172,27 @@ void Console::Draw(const char *title) {
       ImGuiCond_Always, ImVec2(0, 1));
   ImGui::SetNextWindowBgAlpha(1);
   if (ImGui::IsItemActive()) {
+    completions = cmdManager.getCompletions(inputBuf);
+    if (!completions.empty()) {
+      if (ImGui::BeginChild("##Suggestions", ImVec2(0, 0),
+                            ImGuiChildFlags_AutoResizeX |
+                                ImGuiChildFlags_AlwaysUseWindowPadding)) {
 
-    if (ImGui::BeginChild("##Suggestions", ImVec2(0, 0),
-                          ImGuiChildFlags_AutoResizeX |
-                              ImGuiChildFlags_AlwaysUseWindowPadding)) {
-
-      completions = cmdManager.getCompletions(inputBuf);
-      selectedCompletion = 0;
-      shouldComplete = false;
-      for (size_t i = 0; i < completions.size(); i++) {
-        auto completion = completions[i];
-        if (ImGui::Selectable(completion.c_str(), i == selectedCompletion)) {
-          shouldComplete = true;
+        for (size_t i = 0; i < completions.size(); i++) {
+          auto completion = completions[i];
+          if (ImGui::Selectable(completion.c_str(), i == selectedCompletion)) {
+            shouldComplete = true;
+          }
         }
       }
+      ImGui::EndChild();
+
+      if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_N))
+        selectedCompletion++;
+      if (ImGui::IsKeyChordPressed(ImGuiMod_Ctrl | ImGuiKey_P))
+        selectedCompletion--;
+      selectedCompletion %= completions.size();
     }
-    ImGui::EndChild();
   }
 
   ImGui::End();
@@ -204,44 +218,25 @@ void Console::ExecCommand() {
 
 int Console::TextEditCallback(ImGuiInputTextCallbackData *data) {
 
-  //   // Locate beginning of current word
-  //   const char *word_end = data->Buf + data->CursorPos;
-  //   const char *word_start = word_end;
-  //   while (word_start > data->Buf) {
-  //     const char c = word_start[-1];
-  //     if (c == ' ' || c == '\t' || c == ',' || c == ';')
-  //       break;
-  //     word_start--;
-  //   }
+  if (shouldComplete ||
+      data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+    // Locate beginning of current word
+    const char *word_end = data->Buf + data->CursorPos;
+    const char *word_start = word_end;
+    while (word_start > data->Buf) {
+      const char c = word_start[-1];
+      if (c == ' ' || c == '\t' || c == ',' || c == ';')
+        break;
+      word_start--;
+    }
 
-  //   data->DeleteChars((int)(word_start - data->Buf),
-  //                     (int)(word_end - word_start));
-  //   if (shouldComplete) {
-  //     data->InsertChars(data->CursorPos,
-  //     completions[selectedCompletion].c_str(),
-  //                       completions[selectedCompletion].c_str() +
-  //                           completions[selectedCompletion].size());
-  //   } else {
-  //     int match_len = word_end - word_start;
-  //     for (;;) {
-  //       int c = 0;
-  //       bool all_candidates_matches = true;
-  //       for (size_t i = 0; i < completions.size() && all_candidates_matches;
-  //       i++)
-  //         if (i == 0)
-  //           c = toupper(completions[i][match_len]);
-  //         else if (c == 0 || c != toupper(completions[i][match_len]))
-  //           all_candidates_matches = false;
-  //       if (!all_candidates_matches)
-  //         break;
-  //       match_len++;
-  //     }
-  //     if (match_len > 0) {
-  //       data->InsertChars(data->CursorPos, completions[0].c_str(),
-  //                         completions[0].c_str() + match_len);
-  //     }
-  //   }
-
+    data->DeleteChars((int)(word_start - data->Buf),
+                      (int)(word_end - word_start));
+    data->InsertChars(data->CursorPos, completions[selectedCompletion].c_str(),
+                      completions[selectedCompletion].c_str() +
+                          completions[selectedCompletion].size());
+    data->InsertChars(data->CursorPos, " ");
+  }
   switch (data->EventFlag) {
   case ImGuiInputTextFlags_CallbackHistory: {
     // Example of HISTORY
@@ -270,7 +265,8 @@ int Console::TextEditCallback(ImGuiInputTextCallbackData *data) {
   return 0;
 }
 
-Console::Console(CommandManager &manager) : cmdManager(manager) {
+Console::Console(CommandManager &manager)
+    : shouldComplete(false), cmdManager(manager) {
   ClearLog();
   inputBuf = "";
   historyPos = -1;
