@@ -8,7 +8,8 @@ private:
   CommandManager manager;
 
 public:
-  Interface(Scene &scene, GLFWwindow *window);
+  glm::vec2 renderSize;
+  Interface(Scene &scene, GLFWwindow *window, int width, int height);
   void update(Scene &scene, GLuint textureColorbuffer);
   void destroy();
 };

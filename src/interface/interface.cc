@@ -53,7 +53,8 @@ static void drawHierarchy(Scene &scene) {
   ImGui::End();
 }
 
-Interface::Interface(Scene &scene, GLFWwindow *window) : manager(scene) {
+Interface::Interface(Scene &scene, GLFWwindow *window, int width, int height)
+    : manager(scene), renderSize(width, height) {
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -91,7 +92,9 @@ void Interface::update(Scene &scene, GLuint renderedTexture) {
                ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration |
                    ImGuiWindowFlags_NoBringToFrontOnFocus);
   ImGui::BeginChild("GameRender");
-  ImVec2 wsize = ImGui::GetWindowSize();
+  ImVec2 wsize = ImGui::GetContentRegionAvail();
+  renderSize.x = wsize.x;
+  renderSize.y = wsize.y;
   ImGui::Image(renderedTexture, wsize, ImVec2(0, 1), ImVec2(1, 0));
   ImGui::EndChild();
   ImGui::End();

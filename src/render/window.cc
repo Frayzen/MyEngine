@@ -2,8 +2,13 @@
 #include "imgui.h"
 #include "render/window.hh"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
+
+#include <GL/gl.h>
 #include <GL/glext.h>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float2.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
 #include "interface/interface.hh"
@@ -17,12 +22,10 @@ static void glfw_error_callback(int error, const char *description) {
     ;
 }
 
-static void framebufferSizeCallback(GLFWwindow *window, int width, int height) {
-  (void)window;
-  glViewport(0, 0, width, height);
-}
-
 void Window::setupFrameBuffer(int width, int height) {
+  if (framebuffer)
+    glDeleteFramebuffers(1, &framebuffer);
+
   glGenFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   // generate texture
@@ -49,7 +52,7 @@ void Window::setupFrameBuffer(int width, int height) {
 }
 
 Window::Window(int width, int height, const char *title)
-    : width(width), height(height) {
+    : width(width), height(height), framebuffer(0) {
   glfwSetErrorCallback(glfw_error_callback);
 
   glfwInit();
@@ -94,6 +97,13 @@ Window::Window(int width, int height, const char *title)
         },
         nullptr);
   }
+
+  auto framebufferSizeCallback = [](GLFWwindow *window, int width, int height) {
+    (void)window;
+    // TODO: update width and height in the class as well;
+    glViewport(0, 0, width, height);
+  };
+
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
   glViewport(0, 0, width, height);
 
@@ -111,15 +121,23 @@ Window::Window(int width, int height, const char *title)
 
 void Window::run(Scene &scene) {
 
-  interface = std::make_shared<Interface>(scene, window);
+  interface = std::make_shared<Interface>(scene, window, width, height);
   double previousTime = glfwGetTime();
 
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     glDepthMask(GL_TRUE);
 
+    static glm::vec2 lastRenderSize = interface->renderSize;
+    if (lastRenderSize != interface->renderSize)
+      setupFrameBuffer(interface->renderSize.x, interface->renderSize.y);
+    lastRenderSize = interface->renderSize;
+
     // first pass
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glViewport(0, 0, lastRenderSize.x, lastRenderSize.y);
+    scene.camera.aspect = lastRenderSize.x / lastRenderSize.y;
+
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -129,6 +147,7 @@ void Window::run(Scene &scene) {
 
     // second pass
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, width, height);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 

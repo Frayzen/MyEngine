@@ -9,14 +9,15 @@ public:
   Camera(float fov, float aspect, float near, float far)
       : shader("./assets/shaders/basic.vert", "./assets/shaders/basic.frag",
                true),
-        fov(fov), near(near), far(far), aspect(aspect) {};
+        aspect(aspect), fov(fov), near(near), far(far) {};
   glm::mat4 getPerspectiveMat() const;
   void update();
 
   Transform transform;
   Shader shader;
+  float aspect;
 
 private:
-  float fov, near, far, aspect;
+  float fov, near, far;
   float movementSpeed = 1.0;
 };

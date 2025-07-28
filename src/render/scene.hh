@@ -14,9 +14,8 @@ public:
   void instantiate(std::shared_ptr<Model> model);
   std::shared_ptr<Object> rootObject;
   Object *highlightedObject;
-
-private:
   Camera &camera;
 
+private:
   Shader highlightShader;
 };
