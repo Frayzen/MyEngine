@@ -12,7 +12,6 @@ private:
   size_t selectedCompletion;
   std::vector<std::string> completions;
 
-  std::vector<std::string> logs;
   std::vector<std::string> history;
   int historyPos; // -1: new line, 0..History.Size-1 browsing history.
   ImGuiTextFilter filter;
@@ -24,8 +23,6 @@ public:
   Console(CommandManager &manager);
   ~Console();
 
-  void ClearLog();
-  void AddLog(const char *fmt, ...) IM_FMTARGS(2);
   void Draw(const char *title);
   void ExecCommand();
   int TextEditCallback(ImGuiInputTextCallbackData *data);

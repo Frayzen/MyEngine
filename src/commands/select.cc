@@ -1,7 +1,16 @@
 #include "select.hh"
 #include <iostream>
+#include "commands/arg.hh"
+#include "commands/command.hh"
 
-Select::Select() : Command("select", 0, 1) {}
+Select::Select() : Command("select") {
+  positionalParams.push_back(Arg{
+      .fullName = "target",
+      .desc = "the new focus target",
+      .type = OBJECT,
+      .defaultValue = "root",
+  });
+}
 
 int Select::execute(CommandManager &manager, std::vector<std::string> args) {
   Scene &scene = manager.getScene();

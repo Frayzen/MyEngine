@@ -1,5 +1,4 @@
 #include "console.hh"
-#include <iostream>
 #include "commands/command_manager.hh"
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"
@@ -10,28 +9,17 @@ static std::string trim(std::string &str) {
   return str;
 }
 
-void Console::ClearLog() { logs.clear(); }
-
-void Console::AddLog(const char *fmt, ...) {
-  char buf[1024];
-  va_list args;
-  va_start(args, fmt);
-  std::vsnprintf(buf, IM_ARRAYSIZE(buf), fmt, args);
-  buf[IM_ARRAYSIZE(buf) - 1] = 0;
-  va_end(args);
-  logs.emplace_back(buf);
-}
-
 void Console::Draw(const char *title) {
   ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
-  if (!ImGui::Begin(title)) {
+  ImGui::SetNextWindowFocus();
+  if (!ImGui::Begin(title, NULL)) {
     ImGui::End();
     return;
   }
 
   // TODO: display items starting from the bottom
   if (ImGui::SmallButton("Clear")) {
-    ClearLog();
+    cmdManager.logs.clear();
   }
   ImGui::SameLine();
   bool copyToCliboard = ImGui::SmallButton("Copy");
@@ -58,7 +46,7 @@ void Console::Draw(const char *title) {
                         ImGuiWindowFlags_HorizontalScrollbar)) {
     if (ImGui::BeginPopupContextWindow()) {
       if (ImGui::Selectable("Clear"))
-        ClearLog();
+        cmdManager.logs.clear();
       ImGui::EndPopup();
     }
 
@@ -96,7 +84,7 @@ void Console::Draw(const char *title) {
                         ImVec2(4, 1)); // Tighten spacing
     if (copyToCliboard)
       ImGui::LogToClipboard();
-    for (auto log : logs) {
+    for (auto log : cmdManager.logs) {
       if (!filter.PassFilter(log.c_str()))
         continue;
 
@@ -199,7 +187,7 @@ void Console::Draw(const char *title) {
 }
 
 void Console::ExecCommand() {
-  AddLog("# %s\n", inputBuf.c_str());
+  cmdManager.log("> %s\n", inputBuf.c_str());
 
   // Insert into history. First find match and delete it so it can be pushed
   // to the back. This isn't trying to be smart or optimal.
@@ -218,8 +206,10 @@ void Console::ExecCommand() {
 
 int Console::TextEditCallback(ImGuiInputTextCallbackData *data) {
 
-  if (shouldComplete ||
-      data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+  auto completionRequested =
+      shouldComplete ||
+      data->EventFlag == ImGuiInputTextFlags_CallbackCompletion;
+  if (!completions.empty() && completionRequested) {
     // Locate beginning of current word
     const char *word_end = data->Buf + data->CursorPos;
     const char *word_start = word_end;
@@ -267,11 +257,11 @@ int Console::TextEditCallback(ImGuiInputTextCallbackData *data) {
 
 Console::Console(CommandManager &manager)
     : shouldComplete(false), cmdManager(manager) {
-  ClearLog();
+  cmdManager.logs.clear();
   inputBuf = "";
   historyPos = -1;
   autoScroll = true;
   scrollToBottom = false;
-  AddLog("Welcome to MyEngine !");
+  cmdManager.logger << "Welcome to MyEngine !" << std::endl;
 }
-Console::~Console() { ClearLog(); }
+Console::~Console() { cmdManager.logs.clear(); }

@@ -1,12 +1,31 @@
 #include "command.hh"
 #include <iostream>
+#include <sstream>
 
-Command::Command(std::string name, size_t minArgNumber, size_t maxArgNumber)
-    : name(name), minArgNumber(minArgNumber), maxArgNumber(maxArgNumber),
-      scene(nullptr) {};
+Command::Command(std::string name)
+    : positionalParams(), scene(nullptr), name(name) {};
 
-std::vector<CmdParameter> Command::getParameters() { return parameters; }
 void Command::setup(Scene *scene) { this->scene = scene; }
 std::string Command::getName() { return name; }
 
-void Command::printHelp() { std::cout << "HELP !" << std::endl; }
+std::string Command::getHelpString() const {
+  std::ostringstream help;
+  help << "[Help] " << name << std::endl;
+  help << name;
+
+  for (auto arg : positionalParams)
+    help << " <" << arg.fullName << ">";
+
+  help << std::endl;
+  for (auto arg : positionalParams) {
+    help << arg.fullName << ": " << arg.desc;
+    if (arg.defaultValue != nullptr)
+      help << "(default = " << arg.defaultValue << ")";
+    help << std::endl;
+  }
+  return help.str();
+}
+
+const std::vector<Arg> Command::getPositionalParams() const {
+  return positionalParams;
+}

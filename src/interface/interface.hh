@@ -6,7 +6,7 @@
 #include "render/scene.hh"
 class Interface {
 private:
-  CommandManager manager;
+  CommandManager cmdManager;
   Console console;
 
 public:
