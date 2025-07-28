@@ -1,4 +1,5 @@
 #include "command_manager.hh"
+#include <algorithm>
 #include <cstdarg>
 #include <iostream>
 #include <string>
@@ -28,14 +29,26 @@ int CommandManager::execute(std::string cmdLine) {
     return 1;
   for (auto cmd : commands) {
     if (cmd->getName() == args[0]) {
-      auto positional = cmd->getPositionalParams();
-      auto cur = args.size() - 1;
-      while (cur < positional.size()) {
-        if (positional[cur].defaultValue != nullptr)
-          args.push_back(positional[cur].defaultValue);
-        cur++;
+
+      auto positionals = cmd->getPositionalParams();
+
+      size_t argNb = args.size() - 1;
+      size_t missing = 0;
+      if (argNb < positionals.size())
+        missing = positionals.size() - argNb;
+
+      int insertArgPos = 1;
+      size_t cur = 0;
+      while (missing > 0 && cur < positionals.size()) {
+        auto pos = positionals[cur++];
+        if (pos.defaultValue == nullptr) {
+          insertArgPos++;
+          continue;
+        }
+        args.insert(args.begin() + insertArgPos, pos.defaultValue);
+        missing--;
       }
-      if (cmd->getPositionalParams().size() + 1 != args.size()) {
+      if (missing) {
         logger << cmd->getHelpString();
         return 1;
       }
@@ -60,7 +73,6 @@ CommandManager::getCompletions(const std::string &partial) {
         lastCmd = cmd.get();
       }
     }
-    matches.push_back("selact");
   } else {
     // TODO
     (void)lastCmd;

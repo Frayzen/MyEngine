@@ -215,7 +215,7 @@ int Console::TextEditCallback(ImGuiInputTextCallbackData *data) {
     const char *word_start = word_end;
     while (word_start > data->Buf) {
       const char c = word_start[-1];
-      if (c == ' ' || c == '\t' || c == ',' || c == ';')
+      if (c == ' ')
         break;
       word_start--;
     }
