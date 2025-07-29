@@ -11,7 +11,6 @@ public:
                true),
         aspect(aspect), fov(fov), near(near), far(far) {};
   glm::mat4 getPerspectiveMat() const;
-  void update();
 
   Transform transform;
   Shader shader;

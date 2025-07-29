@@ -1,11 +1,10 @@
 #pragma once
 
-#include <string>
 #include "commands/command.hh"
-
-class Select : public Command {
+class Orient : public Command {
 public:
-  Select();
-  ~Select() = default;
+  Orient();
+  ~Orient() = default;
+
   int execute(CommandManager &manager, std::vector<std::string> args);
 };

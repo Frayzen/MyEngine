@@ -6,6 +6,7 @@
 #include <imgui_impl_opengl3.h>
 #include <memory>
 #include "commands/command_manager.hh"
+#include "commands/orient.hh"
 #include "commands/select.hh"
 #include "interface/console.hh"
 #include "render/scene.hh"
@@ -18,7 +19,7 @@ static void drawHierarchy(Scene &scene) {
                                    ImGuiTreeNodeFlags_SpanAvailWidth |
                                    ImGuiTreeNodeFlags_DrawLinesToNodes |
                                    ImGuiTreeNodeFlags_DefaultOpen;
-        if (obj.get() == scene.highlightedObject)
+        if (obj.get() == scene.getHighlighted())
           flags |= ImGuiTreeNodeFlags_Selected;
         bool isLeaf = obj->getChildren().empty();
         if (isLeaf)
@@ -38,7 +39,7 @@ static void drawHierarchy(Scene &scene) {
         }
 
         if (ImGui::IsItemClicked() || ImGui::IsItemActivated())
-          scene.highlightedObject = obj.get();
+          scene.updateHighlighted(obj.get());
 
         if (is_open && !isLeaf) {
           for (auto &child : obj->getChildren()) {
@@ -73,6 +74,7 @@ Interface::Interface(Scene &scene, GLFWwindow *window, int width, int height)
   ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
   cmdManager.registerCommand<Select>();
+  cmdManager.registerCommand<Orient>();
 }
 
 void Interface::destroy() {

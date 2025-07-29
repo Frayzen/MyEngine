@@ -16,7 +16,7 @@ public:
          const Transform transform);
 
   std::shared_ptr<Object> instantiate(std::shared_ptr<Model> model);
-  void apply(const std::function<int(Object &obj)> fn);
+  void apply(const std::function<bool(Object &obj)> fn);
   void cacheModelMats(const glm::mat4 &parentMat);
 
   bool rendered;

@@ -23,4 +23,6 @@ public:
   friend class CommandManager;
   std::string getHelpString() const;
   const std::vector<Arg> getPositionalParams() const;
+  const std::vector<std::string>
+  argumentCompletion(std::vector<std::string> &args) const;
 };

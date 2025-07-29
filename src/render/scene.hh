@@ -13,9 +13,14 @@ public:
   void update();
   void instantiate(std::shared_ptr<Model> model);
   std::shared_ptr<Object> rootObject;
-  Object *highlightedObject;
+
+  void updateHighlighted(Object *newHighlight,
+                         glm::vec3 lookDir = glm::vec3(0, 0, -1));
+  Object *getHighlighted() const;
+
   Camera &camera;
 
 private:
   Shader highlightShader;
+  Object *highlightedObject;
 };

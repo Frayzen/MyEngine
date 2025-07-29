@@ -15,27 +15,27 @@
 #include "render/shader.hh"
 
 Scene::Scene(Camera &cam)
-    : highlightedObject(nullptr), camera(cam),
-      highlightShader("./assets/shaders/highlight.vert",
-                      "./assets/shaders/highlight.frag", false) {
+    : camera(cam), highlightShader("./assets/shaders/highlight.vert",
+                                   "./assets/shaders/highlight.frag", false),
+      highlightedObject(nullptr) {
   rootObject = std::make_shared<Object>("root", nullptr, Transform());
-  // highlightedObject = rootObject;
+  highlightedObject = rootObject.get();
 }
 void Scene::instantiate(std::shared_ptr<Model> model) {
   rootObject->instantiate(model);
 }
 
-void Scene::update() {
-  camera.update();
-  if (highlightedObject) {
-    auto bounds = highlightedObject->getBounds();
-    auto center = bounds.getCenter();
-    camera.transform.position =
-        -center + glm::vec3(0, 0, 0.5) * glm::length(bounds.getDiagonal());
-    camera.transform.rotation =
-        glm::quat(glm::vec3(0, 0, -1), camera.transform.position + center);
-  }
+void Scene::updateHighlighted(Object *newHighlight, glm::vec3 lookDir) {
+  highlightedObject = newHighlight;
+  auto bounds = highlightedObject->getBounds();
+  auto center = bounds.getCenter();
+  camera.transform.position =
+      -center + lookDir * 0.5f * glm::length(bounds.getDiagonal());
+  camera.transform.rotation =
+      glm::quat(camera.transform.position + center, glm::vec3(0, 0, -1));
 }
+
+void Scene::update() {}
 
 void Scene::render() {
   glEnable(GL_DEPTH_TEST);
@@ -69,6 +69,8 @@ void Scene::render() {
 
   glBindVertexArray(0);
 }
+
+Object *Scene::getHighlighted() const { return highlightedObject; }
 
 /* FOR FUTURE CODE ABOUT POST PROCESSING
     screenShader->use();

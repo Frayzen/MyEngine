@@ -63,21 +63,27 @@ std::vector<std::string>
 CommandManager::getCompletions(const std::string &partial) {
   std::vector<std::string> matches;
   auto args = convertCommandLine(partial, true);
-  if (args.empty())
-    return matches;
-  static Command *lastCmd;
-  if (args.size() == 1) {
+  switch (args.size()) {
+  case 0:
+    return {};
+  case 1: {
     for (auto cmd : commands) {
       if (cmd->name.starts_with(args[0])) {
         matches.push_back(cmd->name);
-        lastCmd = cmd.get();
       }
     }
-  } else {
-    // TODO
-    (void)lastCmd;
+    return matches;
   }
-  return matches;
+  default: {
+    std::shared_ptr<Command> curCmd;
+    for (std::shared_ptr<Command> cmd : commands) {
+      if (cmd->name == args[0]) {
+        return cmd->argumentCompletion(args);
+      }
+    }
+    return {};
+  }
+  }
 }
 
 void CommandManager::attachScene(Scene *scene) {

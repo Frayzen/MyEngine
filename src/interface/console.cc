@@ -136,14 +136,14 @@ void Console::Draw(const char *title) {
   };
   if (ImGui::InputText("Input", &inputBuf, input_text_flags,
                        TextEditCallbackStub, (void *)this)) {
-    if (!completions.empty() && !ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
-      shouldComplete = true;
-    } else {
-      inputBuf = trim(inputBuf);
-      if (!inputBuf.empty())
-        ExecCommand();
-      inputBuf = "";
-    }
+    // if (!completions.empty() && !ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+    //   shouldComplete = true;
+    // } else {
+    inputBuf = trim(inputBuf);
+    if (!inputBuf.empty())
+      ExecCommand();
+    inputBuf = "";
+    // }
     reclaimFocus = true;
   }
 

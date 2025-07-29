@@ -7,28 +7,23 @@ Select::Select() : Command("select") {
   positionalParams.push_back(Arg{
       .fullName = "target",
       .desc = "the new focus target",
-      .type = OBJECT,
+      .type = ARG_SCENE_OBJECT,
       .defaultValue = "root",
   });
 }
 
 int Select::execute(CommandManager &manager, std::vector<std::string> args) {
   Scene &scene = manager.getScene();
-  if (args.size() == 1) {
-    scene.highlightedObject = nullptr;
-    return 0;
-  }
-
   Object *found = nullptr;
 
   auto searchLambda = [args, &found](Object &o) {
     if (found)
-      return 0;
+      return false;
     if (o.name == args[1]) {
       found = &o;
-      return 0;
+      return false;
     }
-    return 1;
+    return true;
   };
 
   scene.rootObject->apply(searchLambda);
@@ -36,6 +31,6 @@ int Select::execute(CommandManager &manager, std::vector<std::string> args) {
     std::cerr << "Not found : " << args[1] << std::endl;
     return 1;
   }
-  scene.highlightedObject = found;
+  scene.updateHighlighted(found);
   return 0;
 }
